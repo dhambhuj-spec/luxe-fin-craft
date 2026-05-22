@@ -75,11 +75,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Aurum — Premium Loan & Insurance Advisory in India" },
       { name: "description", content: "Aurum is an RBI-registered loan & IRDAI-licensed insurance advisory. Compare offers from 40+ banks for home loans, business loans, car loans and insurance — at India's lowest rates." },
       { name: "author", content: "Aurum Financial Advisory" },
-      { property: "og:title", content: "Aurum — Premium Loan & Insurance Advisory" },
-      { property: "og:description", content: "Trusted financial partner for loans & insurance. 40+ bank partners, ₹2,500 Cr+ disbursed." },
+      { property: "og:title", content: "Aurum — Premium Loan & Insurance Advisory in India" },
+      { property: "og:description", content: "Aurum is an RBI-registered loan & IRDAI-licensed insurance advisory. Compare offers from 40+ banks for home loans, business loans, car loans and insurance — at India's lowest rates." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Aurum — Premium Loan & Insurance Advisory in India" },
+      { name: "twitter:description", content: "Aurum is an RBI-registered loan & IRDAI-licensed insurance advisory. Compare offers from 40+ banks for home loans, business loans, car loans and insurance — at India's lowest rates." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/571c4300-8cf2-415a-a216-f98a66f0df46/id-preview-73c2a73c--3142608e-7bf1-4614-8ed6-d95d3c84bf6f.lovable.app-1779435156223.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/571c4300-8cf2-415a-a216-f98a66f0df46/id-preview-73c2a73c--3142608e-7bf1-4614-8ed6-d95d3c84bf6f.lovable.app-1779435156223.png" },
     ],
     links: [
       {

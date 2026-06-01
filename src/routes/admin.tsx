@@ -4,6 +4,7 @@ import {
   LayoutDashboard, FileText, Users, Settings, LogOut, Bell, Search,
   Plus, Upload, Image as ImgIcon, MoreHorizontal, TrendingUp,
   Eye, Edit3, Trash2, ChevronDown, Building2, X, Percent, Save, Check,
+  Mail, Phone, MessageCircle, Filter, ArrowUpRight, Shield, Globe, Palette, CreditCard, Lock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({ component: Admin });
@@ -34,9 +35,11 @@ const initialRates: Rate[] = [
   { id: "gold", name: "Gold Loan", min: 8.90, max: 14.00, processing: "0.30%", tenure: "Up to 3 yrs", updated: "01 Mar 2025" },
 ];
 
+type View = "dashboard" | "brochures" | "rates" | "leads" | "analytics" | "settings";
+
 function Admin() {
   const [showModal, setShowModal] = useState(false);
-  const [view, setView] = useState<"dashboard" | "brochures" | "rates">("dashboard");
+  const [view, setView] = useState<View>("dashboard");
   const [brochures, setBrochures] = useState<Brochure[]>(initialBrochures);
   const [rates, setRates] = useState<Rate[]>(initialRates);
   const [editBrochure, setEditBrochure] = useState<Brochure | null>(null);
@@ -74,7 +77,7 @@ function Admin() {
           ].map(i => (
             <button
               key={i.label}
-              onClick={() => (i.id === "dashboard" || i.id === "brochures" || i.id === "rates") && setView(i.id)}
+              onClick={() => setView(i.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 view === i.id ? "bg-brand-gold text-brand-dark" : "text-white/70 hover:text-white hover:bg-white/5"
               }`}
@@ -111,7 +114,7 @@ function Admin() {
             <Bell size={16} />
             <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-brand-gold" />
           </button>
-          {view !== "rates" && (
+          {(view === "dashboard" || view === "brochures") && (
             <button onClick={() => { setEditBrochure(null); setShowModal(true); }} className="inline-flex items-center gap-2 rounded-xl bg-brand-dark text-white text-sm font-semibold px-4 py-2 hover:bg-brand-dark/90">
               <Plus size={14} /> Add Brochure
             </button>
@@ -122,8 +125,11 @@ function Admin() {
           {view === "rates" && (
             <RatesView rates={rates} setRates={setRates} />
           )}
+          {view === "leads" && <LeadsView />}
+          {view === "analytics" && <AnalyticsView />}
+          {view === "settings" && <SettingsView />}
 
-          {view !== "rates" && (
+          {(view === "dashboard" || view === "brochures") && (
             <>
           {/* Page title */}
           <div>

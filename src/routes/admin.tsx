@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   LayoutDashboard, FileText, Users, Settings, LogOut, Bell, Search,
-  Plus, Upload, Image as ImgIcon, MoreHorizontal, TrendingUp, Download,
+  Plus, Upload, Image as ImgIcon, MoreHorizontal, TrendingUp,
   Eye, Edit3, Trash2, ChevronDown, Building2, X, Percent, Save, Check,
 } from "lucide-react";
 

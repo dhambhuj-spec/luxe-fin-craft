@@ -2,23 +2,58 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   LayoutDashboard, FileText, Users, Settings, LogOut, Bell, Search,
-  Plus, Upload, Image as ImgIcon, MoreHorizontal, TrendingUp, Download,
-  Eye, Edit3, Trash2, ChevronDown, Building2, X,
+  Plus, Upload, Image as ImgIcon, MoreHorizontal, TrendingUp,
+  Eye, Edit3, Trash2, ChevronDown, Building2, X, Percent, Save, Check,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({ component: Admin });
 
-const brochures = [
-  { name: "Lodha Belmondo", loc: "Pune", type: "Residential", date: "12 Mar 2025", views: 1248, status: "Published" },
-  { name: "Prestige Falcon City", loc: "Bengaluru", type: "Residential", date: "08 Mar 2025", views: 982, status: "Published" },
-  { name: "DLF Camellias", loc: "Gurugram", type: "Luxury", date: "01 Mar 2025", views: 2104, status: "Published" },
-  { name: "Godrej Reserve", loc: "Mumbai", type: "Residential", date: "27 Feb 2025", views: 614, status: "Draft" },
-  { name: "Brigade El Dorado", loc: "Bengaluru", type: "Commercial", date: "21 Feb 2025", views: 530, status: "Published" },
-  { name: "Sobha Dream Acres", loc: "Bengaluru", type: "Residential", date: "15 Feb 2025", views: 745, status: "Archived" },
+type Brochure = {
+  name: string; builder: string; loc: string; type: string; price: string;
+  configs: string; possession: string; rera: string; date: string; views: number; status: string;
+};
+
+const initialBrochures: Brochure[] = [
+  { name: "Lodha Belmondo", builder: "Lodha Group", loc: "Pune", type: "Residential", price: "₹2.4 Cr", configs: "3, 4 BHK", possession: "Dec 2026", rera: "P52100012345", date: "12 Mar 2025", views: 1248, status: "Published" },
+  { name: "Prestige Falcon City", builder: "Prestige Estates", loc: "Bengaluru", type: "Residential", price: "₹1.8 Cr", configs: "2, 3, 4 BHK", possession: "Jun 2027", rera: "PRM/KA/RERA/22345", date: "08 Mar 2025", views: 982, status: "Published" },
+  { name: "DLF Camellias", builder: "DLF Limited", loc: "Gurugram", type: "Luxury", price: "₹12 Cr", configs: "4, 5 BHK", possession: "Ready to move", rera: "RC/REP/HARERA/445", date: "01 Mar 2025", views: 2104, status: "Published" },
+  { name: "Godrej Reserve", builder: "Godrej Properties", loc: "Mumbai", type: "Residential", price: "₹3.2 Cr", configs: "3 BHK", possession: "Mar 2027", rera: "P51800023456", date: "27 Feb 2025", views: 614, status: "Draft" },
+  { name: "Brigade El Dorado", builder: "Brigade Group", loc: "Bengaluru", type: "Commercial", price: "₹95 L", configs: "1, 2 BHK", possession: "Sep 2026", rera: "PRM/KA/RERA/33456", date: "21 Feb 2025", views: 530, status: "Published" },
+  { name: "Sobha Dream Acres", builder: "Sobha Limited", loc: "Bengaluru", type: "Residential", price: "₹1.1 Cr", configs: "2, 3 BHK", possession: "Dec 2025", rera: "PRM/KA/RERA/44567", date: "15 Feb 2025", views: 745, status: "Archived" },
+];
+
+type Rate = { id: string; name: string; min: number; max: number; processing: string; tenure: string; updated: string };
+
+const initialRates: Rate[] = [
+  { id: "home", name: "Home Loan", min: 8.40, max: 9.75, processing: "0.50%", tenure: "Up to 30 yrs", updated: "12 Mar 2025" },
+  { id: "car", name: "Car Loan", min: 8.75, max: 11.50, processing: "1.00%", tenure: "Up to 7 yrs", updated: "10 Mar 2025" },
+  { id: "business", name: "Business Loan", min: 11.99, max: 18.00, processing: "1.50%", tenure: "Up to 5 yrs", updated: "08 Mar 2025" },
+  { id: "personal", name: "Personal Loan", min: 10.50, max: 16.00, processing: "1.25%", tenure: "Up to 6 yrs", updated: "08 Mar 2025" },
+  { id: "lap", name: "Loan Against Property", min: 9.25, max: 12.50, processing: "0.75%", tenure: "Up to 15 yrs", updated: "05 Mar 2025" },
+  { id: "edu", name: "Education Loan", min: 9.50, max: 13.00, processing: "1.00%", tenure: "Up to 10 yrs", updated: "01 Mar 2025" },
+  { id: "gold", name: "Gold Loan", min: 8.90, max: 14.00, processing: "0.30%", tenure: "Up to 3 yrs", updated: "01 Mar 2025" },
 ];
 
 function Admin() {
   const [showModal, setShowModal] = useState(false);
+  const [view, setView] = useState<"dashboard" | "brochures" | "rates">("dashboard");
+  const [brochures, setBrochures] = useState<Brochure[]>(initialBrochures);
+  const [rates, setRates] = useState<Rate[]>(initialRates);
+  const [editBrochure, setEditBrochure] = useState<Brochure | null>(null);
+
+  const handleSaveBrochure = (b: Brochure) => {
+    setBrochures((list) => {
+      const exists = list.find((x) => x.name === b.name);
+      return exists ? list.map((x) => (x.name === b.name ? b : x)) : [b, ...list];
+    });
+    setShowModal(false);
+    setEditBrochure(null);
+  };
+
+  const handleDeleteBrochure = (name: string) => {
+    setBrochures((list) => list.filter((b) => b.name !== name));
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-brand-dark flex">
       {/* Sidebar */}
@@ -30,17 +65,24 @@ function Admin() {
 
         <nav className="flex-1 space-y-1">
           {[
-            { icon: LayoutDashboard, label: "Dashboard", active: true },
-            { icon: FileText, label: "Brochures", badge: "6" },
-            { icon: Users, label: "Leads", badge: "24" },
-            { icon: TrendingUp, label: "Analytics" },
-            { icon: Settings, label: "Settings" },
+            { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" as const },
+            { icon: FileText, label: "Brochures", id: "brochures" as const, badge: String(brochures.length) },
+            { icon: Percent, label: "Interest Rates", id: "rates" as const, badge: String(rates.length) },
+            { icon: Users, label: "Leads", id: "leads" as const, badge: "24" },
+            { icon: TrendingUp, label: "Analytics", id: "analytics" as const },
+            { icon: Settings, label: "Settings", id: "settings" as const },
           ].map(i => (
-            <a key={i.label} href="#" className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${i.active ? "bg-brand-gold text-brand-dark" : "text-white/70 hover:text-white hover:bg-white/5"}`}>
+            <button
+              key={i.label}
+              onClick={() => (i.id === "dashboard" || i.id === "brochures" || i.id === "rates") && setView(i.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                view === i.id ? "bg-brand-gold text-brand-dark" : "text-white/70 hover:text-white hover:bg-white/5"
+              }`}
+            >
               <i.icon size={16} />
               <span className="flex-1">{i.label}</span>
-              {i.badge && <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${i.active ? "bg-brand-dark text-brand-gold" : "bg-white/10"}`}>{i.badge}</span>}
-            </a>
+              {i.badge && <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === i.id ? "bg-brand-dark text-brand-gold" : "bg-white/10"}`}>{i.badge}</span>}
+            </button>
           ))}
         </nav>
 
@@ -69,12 +111,20 @@ function Admin() {
             <Bell size={16} />
             <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-brand-gold" />
           </button>
-          <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-brand-dark text-white text-sm font-semibold px-4 py-2 hover:bg-brand-dark/90">
-            <Plus size={14} /> Add Brochure
-          </button>
+          {view !== "rates" && (
+            <button onClick={() => { setEditBrochure(null); setShowModal(true); }} className="inline-flex items-center gap-2 rounded-xl bg-brand-dark text-white text-sm font-semibold px-4 py-2 hover:bg-brand-dark/90">
+              <Plus size={14} /> Add Brochure
+            </button>
+          )}
         </header>
 
         <main className="p-6 space-y-6">
+          {view === "rates" && (
+            <RatesView rates={rates} setRates={setRates} />
+          )}
+
+          {view !== "rates" && (
+            <>
           {/* Page title */}
           <div>
             <div className="text-xs text-slate-500">Dashboard</div>
@@ -101,6 +151,8 @@ function Admin() {
             ))}
           </div>
 
+          {view === "dashboard" && (
+            <>
           {/* Analytics + chart */}
           <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5">
@@ -156,17 +208,19 @@ function Admin() {
               </div>
             </div>
           </div>
+            </>
+          )}
 
           {/* Table */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-5 border-b border-slate-200">
               <div>
                 <h3 className="font-bold flex items-center gap-2"><Building2 size={16} className="text-brand-gold"/> All brochures</h3>
-                <p className="text-xs text-slate-500">Manage your project brochures</p>
+                <p className="text-xs text-slate-500">Manage your builder project brochures</p>
               </div>
               <div className="flex items-center gap-2">
                 <button className="text-xs flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-slate-50">All status <ChevronDown size={12} /></button>
-                <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark text-white text-xs font-semibold px-3 py-1.5"><Plus size={12} /> New</button>
+                <button onClick={() => { setEditBrochure(null); setShowModal(true); }} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-dark text-white text-xs font-semibold px-3 py-1.5"><Plus size={12} /> New</button>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -174,8 +228,9 @@ function Admin() {
                 <thead className="bg-slate-50 text-xs uppercase text-slate-500 tracking-wider">
                   <tr>
                     <th className="text-left font-semibold px-5 py-3">Project</th>
-                    <th className="text-left font-semibold px-5 py-3">Type</th>
-                    <th className="text-left font-semibold px-5 py-3">Date</th>
+                    <th className="text-left font-semibold px-5 py-3">Builder</th>
+                    <th className="text-left font-semibold px-5 py-3">Config / Price</th>
+                    <th className="text-left font-semibold px-5 py-3">Possession</th>
                     <th className="text-left font-semibold px-5 py-3">Views</th>
                     <th className="text-left font-semibold px-5 py-3">Status</th>
                     <th className="text-right font-semibold px-5 py-3">Actions</th>
@@ -191,12 +246,16 @@ function Admin() {
                           </div>
                           <div>
                             <div className="font-semibold">{b.name}</div>
-                            <div className="text-xs text-slate-500">{b.loc}</div>
+                            <div className="text-xs text-slate-500">{b.loc} · {b.type}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-slate-600">{b.type}</td>
-                      <td className="px-5 py-4 text-slate-600">{b.date}</td>
+                      <td className="px-5 py-4 text-slate-600">{b.builder}</td>
+                      <td className="px-5 py-4 text-slate-600">
+                        <div className="font-medium text-brand-dark">{b.price}</div>
+                        <div className="text-xs text-slate-500">{b.configs}</div>
+                      </td>
+                      <td className="px-5 py-4 text-slate-600">{b.possession}</td>
                       <td className="px-5 py-4 font-medium">{b.views.toLocaleString()}</td>
                       <td className="px-5 py-4">
                         <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
@@ -208,8 +267,8 @@ function Admin() {
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-1">
                           <button title="View" className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Eye size={14}/></button>
-                          <button title="Edit" className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Edit3 size={14}/></button>
-                          <button title="Delete" className="h-8 w-8 rounded-lg hover:bg-rose-50 grid place-items-center text-rose-500"><Trash2 size={14}/></button>
+                          <button title="Edit" onClick={() => { setEditBrochure(b); setShowModal(true); }} className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Edit3 size={14}/></button>
+                          <button title="Delete" onClick={() => handleDeleteBrochure(b.name)} className="h-8 w-8 rounded-lg hover:bg-rose-50 grid place-items-center text-rose-500"><Trash2 size={14}/></button>
                           <button className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><MoreHorizontal size={14}/></button>
                         </div>
                       </td>
@@ -219,7 +278,7 @@ function Admin() {
               </table>
             </div>
             <div className="flex items-center justify-between p-4 border-t border-slate-100 text-xs text-slate-500">
-              <div>Showing 1–6 of 26 brochures</div>
+              <div>Showing 1–{brochures.length} of {brochures.length} brochures</div>
               <div className="flex gap-1">
                 <button className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">Prev</button>
                 <button className="px-3 py-1.5 rounded-lg bg-brand-dark text-white">1</button>
@@ -229,58 +288,236 @@ function Admin() {
               </div>
             </div>
           </div>
+            </>
+          )}
         </main>
       </div>
 
       {/* Add brochure modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-brand-dark/40 backdrop-blur-sm grid place-items-center p-4" onClick={() => setShowModal(false)}>
-          <div onClick={(e)=>e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-slate-200">
-              <div>
-                <h3 className="font-bold text-lg">Add new brochure</h3>
-                <p className="text-xs text-slate-500">Upload PDF and project metadata.</p>
-              </div>
-              <button onClick={() => setShowModal(false)} className="h-9 w-9 rounded-lg hover:bg-slate-100 grid place-items-center"><X size={16}/></button>
-            </div>
-            <div className="p-6 space-y-5">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <AField label="Project name" placeholder="Lodha Belmondo" />
-                <AField label="Location" placeholder="Pune, MH" />
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <ASelect label="Type" opts={["Residential","Commercial","Luxury"]} />
-                <AField label="Starting price" placeholder="₹1.8 Cr" />
-              </div>
-
-              <UploadField icon={Upload} label="PDF Brochure" hint="Max file size 25 MB · PDF only" />
-              <UploadField icon={ImgIcon} label="Thumbnail Image" hint="JPG/PNG · 1200×800 recommended" />
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button onClick={() => setShowModal(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Cancel</button>
-                <button className="rounded-xl bg-brand-dark text-white px-4 py-2 text-sm font-semibold hover:bg-brand-dark/90 inline-flex items-center gap-2"><Plus size={14}/> Publish brochure</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <BrochureModal
+          initial={editBrochure}
+          onClose={() => { setShowModal(false); setEditBrochure(null); }}
+          onSave={handleSaveBrochure}
+        />
       )}
     </div>
   );
 }
 
-function AField({ label, placeholder }: any) {
+function BrochureModal({ initial, onClose, onSave }: { initial: Brochure | null; onClose: () => void; onSave: (b: Brochure) => void }) {
+  const [form, setForm] = useState<Brochure>(
+    initial ?? {
+      name: "", builder: "", loc: "", type: "Residential", price: "",
+      configs: "", possession: "", rera: "",
+      date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+      views: 0, status: "Draft",
+    }
+  );
+  const set = <K extends keyof Brochure>(k: K, v: Brochure[K]) => setForm((f) => ({ ...f, [k]: v }));
+
   return (
-    <div>
-      <label className="block text-xs font-semibold text-slate-700 mb-1.5">{label}</label>
-      <input placeholder={placeholder} className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none" />
+    <div className="fixed inset-0 z-50 bg-brand-dark/40 backdrop-blur-sm grid place-items-center p-4 overflow-y-auto" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+          <div>
+            <h3 className="font-bold text-lg">{initial ? "Edit brochure" : "Add new brochure"}</h3>
+            <p className="text-xs text-slate-500">Builder project details, pricing, and PDF brochure.</p>
+          </div>
+          <button onClick={onClose} className="h-9 w-9 rounded-lg hover:bg-slate-100 grid place-items-center"><X size={16}/></button>
+        </div>
+        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <AField label="Project name" placeholder="Lodha Belmondo" value={form.name} onChange={(v) => set("name", v)} />
+            <AField label="Builder / Developer" placeholder="Lodha Group" value={form.builder} onChange={(v) => set("builder", v)} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <AField label="Location" placeholder="Pune, MH" value={form.loc} onChange={(v) => set("loc", v)} />
+            <ASelect label="Project type" opts={["Residential", "Commercial", "Luxury", "Plotted", "Villas"]} value={form.type} onChange={(v) => set("type", v)} />
+          </div>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <AField label="Starting price" placeholder="₹1.8 Cr" value={form.price} onChange={(v) => set("price", v)} />
+            <AField label="Configurations" placeholder="2, 3, 4 BHK" value={form.configs} onChange={(v) => set("configs", v)} />
+            <AField label="Possession" placeholder="Dec 2026" value={form.possession} onChange={(v) => set("possession", v)} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <AField label="RERA number" placeholder="P52100012345" value={form.rera} onChange={(v) => set("rera", v)} />
+            <ASelect label="Status" opts={["Draft", "Published", "Archived"]} value={form.status} onChange={(v) => set("status", v)} />
+          </div>
+
+          <UploadField icon={Upload} label="PDF Brochure" hint="Max file size 25 MB · PDF only" />
+          <UploadField icon={ImgIcon} label="Thumbnail image" hint="JPG/PNG · 1200×800 recommended" />
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Cancel</button>
+            <button onClick={() => form.name && onSave(form)} className="rounded-xl bg-brand-dark text-white px-4 py-2 text-sm font-semibold hover:bg-brand-dark/90 inline-flex items-center gap-2">
+              <Save size={14}/> {initial ? "Save changes" : "Publish brochure"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-function ASelect({ label, opts }: { label: string; opts: string[] }) {
+
+function RatesView({ rates, setRates }: { rates: Rate[]; setRates: (r: Rate[]) => void }) {
+  const [draft, setDraft] = useState<Rate[]>(rates);
+  const [savedId, setSavedId] = useState<string | null>(null);
+
+  const update = (id: string, patch: Partial<Rate>) => {
+    setDraft((d) => d.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  };
+
+  const saveRow = (id: string) => {
+    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const next = draft.map((r) => (r.id === id ? { ...r, updated: today } : r));
+    setDraft(next);
+    setRates(next);
+    setSavedId(id);
+    setTimeout(() => setSavedId(null), 1500);
+  };
+
+  const saveAll = () => {
+    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const next = draft.map((r) => ({ ...r, updated: today }));
+    setDraft(next);
+    setRates(next);
+  };
+
+  return (
+    <>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div className="text-xs text-slate-500">Loan products</div>
+          <h1 className="text-2xl font-bold mt-0.5 flex items-center gap-2">
+            <Percent size={20} className="text-brand-gold" /> Interest rates
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">Update rate of interest, processing fees and tenure for every loan product.</p>
+        </div>
+        <button onClick={saveAll} className="inline-flex items-center gap-2 rounded-xl bg-brand-dark text-white text-sm font-semibold px-4 py-2 hover:bg-brand-dark/90">
+          <Save size={14} /> Save all changes
+        </button>
+      </div>
+
+      <div className="grid sm:grid-cols-3 gap-4">
+        {[
+          { l: "Loan products", v: String(draft.length) },
+          { l: "Lowest ROI", v: `${Math.min(...draft.map((r) => r.min)).toFixed(2)}%` },
+          { l: "Highest ROI", v: `${Math.max(...draft.map((r) => r.max)).toFixed(2)}%` },
+        ].map((k) => (
+          <div key={k.l} className="rounded-2xl bg-white border border-slate-200 p-5">
+            <div className="text-xs font-medium text-slate-600">{k.l}</div>
+            <div className="mt-2 text-3xl font-bold text-brand-dark">{k.v}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="p-5 border-b border-slate-200">
+          <h3 className="font-bold">Rate sheet</h3>
+          <p className="text-xs text-slate-500">Inline edit fields and save individually or all at once.</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500 tracking-wider">
+              <tr>
+                <th className="text-left font-semibold px-5 py-3">Loan product</th>
+                <th className="text-left font-semibold px-5 py-3">Min ROI (% p.a.)</th>
+                <th className="text-left font-semibold px-5 py-3">Max ROI (% p.a.)</th>
+                <th className="text-left font-semibold px-5 py-3">Processing fee</th>
+                <th className="text-left font-semibold px-5 py-3">Max tenure</th>
+                <th className="text-left font-semibold px-5 py-3">Updated</th>
+                <th className="text-right font-semibold px-5 py-3">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {draft.map((r) => (
+                <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50/50">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-brand-gold/15 grid place-items-center text-brand-dark font-bold text-xs">
+                        {r.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                      </div>
+                      <div className="font-semibold">{r.name}</div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    <NumInput value={r.min} step={0.05} onChange={(v) => update(r.id, { min: v })} />
+                  </td>
+                  <td className="px-5 py-3">
+                    <NumInput value={r.max} step={0.05} onChange={(v) => update(r.id, { max: v })} />
+                  </td>
+                  <td className="px-5 py-3">
+                    <TxtInput value={r.processing} onChange={(v) => update(r.id, { processing: v })} />
+                  </td>
+                  <td className="px-5 py-3">
+                    <TxtInput value={r.tenure} onChange={(v) => update(r.id, { tenure: v })} />
+                  </td>
+                  <td className="px-5 py-3 text-xs text-slate-500">{r.updated}</td>
+                  <td className="px-5 py-3 text-right">
+                    <button
+                      onClick={() => saveRow(r.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        savedId === r.id ? "bg-emerald-100 text-emerald-700" : "bg-brand-dark text-white hover:bg-brand-dark/90"
+                      }`}
+                    >
+                      {savedId === r.id ? <><Check size={12}/> Saved</> : <><Save size={12}/> Save</>}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function NumInput({ value, step, onChange }: { value: number; step: number; onChange: (n: number) => void }) {
+  return (
+    <input
+      type="number"
+      step={step}
+      value={value}
+      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+      className="w-24 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none"
+    />
+  );
+}
+
+function TxtInput({ value, onChange }: { value: string; onChange: (s: string) => void }) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-36 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none"
+    />
+  );
+}
+
+function AField({ label, placeholder, value, onChange }: { label: string; placeholder?: string; value?: string; onChange?: (v: string) => void }) {
   return (
     <div>
       <label className="block text-xs font-semibold text-slate-700 mb-1.5">{label}</label>
-      <select className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none bg-white">
+      <input
+        placeholder={placeholder}
+        value={value ?? ""}
+        onChange={(e) => onChange?.(e.target.value)}
+        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none"
+      />
+    </div>
+  );
+}
+function ASelect({ label, opts, value, onChange }: { label: string; opts: string[]; value?: string; onChange?: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-slate-700 mb-1.5">{label}</label>
+      <select
+        value={value ?? opts[0]}
+        onChange={(e) => onChange?.(e.target.value)}
+        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none bg-white"
+      >
         {opts.map(o => <option key={o}>{o}</option>)}
       </select>
     </div>

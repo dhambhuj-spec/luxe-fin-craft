@@ -1,21 +1,41 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { Search, Download, Eye, MapPin, Building2, Filter } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const data = [
-  { name: "Lodha Belmondo", loc: "Pune, MH", type: "Residential", units: "2-4 BHK", price: "₹1.8 Cr onwards", hue: "from-amber-100 to-orange-200" },
-  { name: "Prestige Falcon City", loc: "Bengaluru, KA", type: "Residential", units: "3-4 BHK", price: "₹2.4 Cr onwards", hue: "from-sky-100 to-indigo-200" },
-  { name: "DLF Camellias", loc: "Gurugram, HR", type: "Luxury", units: "4-5 BHK", price: "₹12 Cr onwards", hue: "from-rose-100 to-pink-200" },
-  { name: "Godrej Reserve", loc: "Mumbai, MH", type: "Residential", units: "1-3 BHK", price: "₹95 L onwards", hue: "from-emerald-100 to-teal-200" },
-  { name: "Brigade El Dorado", loc: "Bengaluru, KA", type: "Commercial", units: "Office", price: "On request", hue: "from-violet-100 to-purple-200" },
-  { name: "Sobha Dream Acres", loc: "Bengaluru, KA", type: "Residential", units: "1-3 BHK", price: "₹68 L onwards", hue: "from-yellow-100 to-amber-200" },
+const hues = [
+  "from-amber-100 to-orange-200",
+  "from-sky-100 to-indigo-200",
+  "from-rose-100 to-pink-200",
+  "from-emerald-100 to-teal-200",
+  "from-violet-100 to-purple-200",
+  "from-yellow-100 to-amber-200",
 ];
 const filters = ["All", "Residential", "Commercial", "Luxury"];
 
 export default function Brochures() {
   const [f, setF] = useState("All");
   const [q, setQ] = useState("");
-  const list = data.filter(d => (f === "All" || d.type === f) && d.name.toLowerCase().includes(q.toLowerCase()));
+
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["public-brochures"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("brochures")
+        .select("id, name, builder, location, project_type, price, configs, image_url, pdf_url")
+        .eq("status", "Published")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const list = rows.filter(d =>
+    (f === "All" || d.project_type === f) &&
+    d.name.toLowerCase().includes(q.toLowerCase())
+  );
+
   return (
     <section id="brochures" className="py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -47,51 +67,71 @@ export default function Brochures() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {list.map((b, i) => (
             <motion.div
-              key={b.name}
+              key={b.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.05 }}
               className="group rounded-3xl bg-white border border-brand-dark/8 overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all shadow-soft"
             >
-              <div className={`relative h-48 bg-gradient-to-br ${b.hue} overflow-hidden`}>
-                <div className="absolute inset-0 grid-bg opacity-30" />
-                <svg className="absolute inset-x-0 bottom-0" viewBox="0 0 400 120" preserveAspectRatio="none">
-                  <path d="M0 80 L40 80 L40 40 L100 40 L100 60 L160 60 L160 20 L220 20 L220 50 L280 50 L280 30 L340 30 L340 70 L400 70 L400 120 L0 120 Z" fill="rgba(48,54,66,0.6)"/>
-                  <path d="M0 95 L60 95 L60 65 L120 65 L120 80 L200 80 L200 55 L260 55 L260 75 L340 75 L340 60 L400 60 L400 120 L0 120 Z" fill="rgba(48,54,66,0.9)"/>
-                </svg>
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 text-[10px] font-bold uppercase tracking-wider text-brand-dark">{b.type}</div>
+              <div className={`relative h-48 bg-gradient-to-br ${hues[i % hues.length]} overflow-hidden`}>
+                {b.image_url ? (
+                  <img src={b.image_url} alt={b.name} className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <div className="absolute inset-0 grid-bg opacity-30" />
+                    <svg className="absolute inset-x-0 bottom-0" viewBox="0 0 400 120" preserveAspectRatio="none">
+                      <path d="M0 80 L40 80 L40 40 L100 40 L100 60 L160 60 L160 20 L220 20 L220 50 L280 50 L280 30 L340 30 L340 70 L400 70 L400 120 L0 120 Z" fill="rgba(48,54,66,0.6)"/>
+                      <path d="M0 95 L60 95 L60 65 L120 65 L120 80 L200 80 L200 55 L260 55 L260 75 L340 75 L340 60 L400 60 L400 120 L0 120 Z" fill="rgba(48,54,66,0.9)"/>
+                    </svg>
+                  </>
+                )}
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 text-[10px] font-bold uppercase tracking-wider text-brand-dark">{b.project_type}</div>
                 <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-brand-gold text-[10px] font-bold uppercase tracking-wider text-brand-dark">New</div>
               </div>
               <div className="p-6">
                 <h3 className="text-lg font-bold text-brand-dark">{b.name}</h3>
                 <div className="mt-1 flex items-center gap-1.5 text-xs text-brand-dark/60">
-                  <MapPin size={12} /> {b.loc}
+                  <MapPin size={12} /> {b.location} · {b.builder}
                 </div>
                 <div className="mt-4 flex items-center justify-between text-xs">
                   <div>
                     <div className="text-brand-dark/40">Configuration</div>
-                    <div className="font-semibold text-brand-dark">{b.units}</div>
+                    <div className="font-semibold text-brand-dark">{b.configs || "—"}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-brand-dark/40">Starting</div>
-                    <div className="font-semibold text-brand-dark">{b.price}</div>
+                    <div className="font-semibold text-brand-dark">{b.price || "On request"}</div>
                   </div>
                 </div>
                 <div className="mt-5 flex gap-2">
-                  <button className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-dark text-white text-xs font-semibold py-2.5 hover:bg-brand-dark/90">
+                  <a
+                    href={b.pdf_url || "#contact"}
+                    target={b.pdf_url ? "_blank" : undefined}
+                    rel="noreferrer"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-dark text-white text-xs font-semibold py-2.5 hover:bg-brand-dark/90"
+                  >
                     <Eye size={13} /> View Brochure
-                  </button>
-                  <button className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gold/15 text-brand-dark text-xs font-semibold px-3 py-2.5 hover:bg-brand-gold/30">
+                  </a>
+                  <a
+                    href={b.pdf_url || "#contact"}
+                    download={!!b.pdf_url}
+                    target={b.pdf_url ? "_blank" : undefined}
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gold/15 text-brand-dark text-xs font-semibold px-3 py-2.5 hover:bg-brand-gold/30"
+                  >
                     <Download size={13} /> PDF
-                  </button>
+                  </a>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
-        {list.length === 0 && (
+        {!isLoading && list.length === 0 && (
           <div className="text-center py-16 text-brand-dark/50 text-sm">No brochures match your search.</div>
+        )}
+        {isLoading && (
+          <div className="text-center py-16 text-brand-dark/50 text-sm">Loading projects…</div>
         )}
       </div>
     </section>

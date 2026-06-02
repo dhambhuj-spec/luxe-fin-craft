@@ -1,6 +1,33 @@
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Send, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Contact() {
+  const [form, setForm] = useState({
+    name: "", phone: "", email: "", product: "Home Loan", amount: "", message: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const set = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.phone || !form.email) {
+      toast.error("Please fill in your name, phone, and email.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.from("leads").insert({
+      name: form.name, email: form.email, phone: form.phone,
+      product: form.product, amount: form.amount || null,
+      message: form.message || null, source: "Website", stage: "New",
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Enquiry submitted. Our advisor will contact you shortly.");
+    setForm({ name: "", phone: "", email: "", product: "Home Loan", amount: "", message: "" });
+  };
+
   return (
     <section id="contact" className="py-24 md:py-32 bg-brand-dark/[0.02]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -14,27 +41,28 @@ export default function Contact() {
 
         <div className="grid lg:grid-cols-5 gap-6">
           {/* Form */}
-          <form onSubmit={(e)=>{e.preventDefault();}} className="lg:col-span-3 glass rounded-3xl p-7 md:p-10 shadow-soft border border-brand-dark/5 space-y-5">
+          <form onSubmit={submit} className="lg:col-span-3 glass rounded-3xl p-7 md:p-10 shadow-soft border border-brand-dark/5 space-y-5">
             <div className="grid sm:grid-cols-2 gap-5">
-              <Field label="Full name" placeholder="Aarav Mehta" />
-              <Field label="Phone number" placeholder="+91 98XXX XXXXX" />
+              <Field label="Full name" placeholder="Aarav Mehta" value={form.name} onChange={(v) => set("name", v)} />
+              <Field label="Phone number" placeholder="+91 98XXX XXXXX" value={form.phone} onChange={(v) => set("phone", v)} />
             </div>
             <div className="grid sm:grid-cols-2 gap-5">
-              <Field label="Email" placeholder="you@email.com" type="email" />
-              <SelectField label="Service" options={["Home Loan","Loan Against Property","Car Loan","Business Loan","Personal Loan","Health Insurance","Motor Insurance","Term Life Insurance"]} />
+              <Field label="Email" placeholder="you@email.com" type="email" value={form.email} onChange={(v) => set("email", v)} />
+              <SelectField label="Service" value={form.product} onChange={(v) => set("product", v)}
+                options={["Home Loan","Loan Against Property","Car Loan","Business Loan","Personal Loan","Health Insurance","Motor Insurance","Term Life Insurance"]} />
             </div>
-            <Field label="Loan amount required" placeholder="₹ 25,00,000" />
+            <Field label="Loan amount required" placeholder="₹ 25,00,000" value={form.amount} onChange={(v) => set("amount", v)} />
             <div>
               <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">Message</label>
-              <textarea rows={4} placeholder="Tell us about your requirement…" className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark placeholder:text-brand-dark/40 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all" />
+              <textarea rows={4} value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Tell us about your requirement…" className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark placeholder:text-brand-dark/40 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all" />
             </div>
             <div className="flex items-center justify-between flex-wrap gap-4">
               <label className="flex items-center gap-2 text-xs text-brand-dark/60">
                 <input type="checkbox" defaultChecked className="rounded accent-brand-gold" />
                 I agree to receive call/WhatsApp updates
               </label>
-              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-brand-dark text-white font-semibold px-6 py-3.5 text-sm hover:bg-brand-dark/90 hover:shadow-xl transition-all">
-                Submit enquiry <Send size={14} />
+              <button type="submit" disabled={busy} className="inline-flex items-center gap-2 rounded-full bg-brand-dark text-white font-semibold px-6 py-3.5 text-sm hover:bg-brand-dark/90 hover:shadow-xl transition-all disabled:opacity-60">
+                {busy ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : <>Submit enquiry <Send size={14} /></>}
               </button>
             </div>
           </form>
@@ -82,20 +110,20 @@ export default function Contact() {
   );
 }
 
-function Field({ label, placeholder, type="text" }: any) {
+function Field({ label, placeholder, type = "text", value, onChange }: { label: string; placeholder?: string; type?: string; value?: string; onChange?: (v: string) => void }) {
   return (
     <div>
       <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">{label}</label>
-      <input type={type} placeholder={placeholder} className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark placeholder:text-brand-dark/40 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all" />
+      <input type={type} placeholder={placeholder} value={value ?? ""} onChange={(e) => onChange?.(e.target.value)} className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark placeholder:text-brand-dark/40 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all" />
     </div>
   );
 }
 
-function SelectField({ label, options }: { label: string; options: string[] }) {
+function SelectField({ label, options, value, onChange }: { label: string; options: string[]; value?: string; onChange?: (v: string) => void }) {
   return (
     <div>
       <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">{label}</label>
-      <select className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all">
+      <select value={value} onChange={(e) => onChange?.(e.target.value)} className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all">
         {options.map(o => <option key={o}>{o}</option>)}
       </select>
     </div>

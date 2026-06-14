@@ -64,9 +64,11 @@ function Admin() {
     <div className="min-h-screen bg-slate-50 text-brand-dark flex">
       {/* Sidebar */}
       <aside className="hidden lg:flex w-64 flex-col bg-brand-dark text-white p-5 sticky top-0 h-screen">
-        <Link to="/" className="flex items-center gap-2 mb-10">
-          <div className="h-9 w-9 rounded-xl gradient-gold grid place-items-center"><span className="font-black text-brand-dark text-lg">A</span></div>
-          <div className="font-bold">Aurum<span className="text-brand-gold">.</span><span className="text-xs font-normal text-white/50 ml-1">Admin</span></div>
+        <Link to="/" className="flex items-center gap-2.5 mb-10">
+          <img src={logo.url} alt="Janaki Raghav Finserve" className="h-10 w-10 object-contain" />
+          <div className="font-bold leading-tight">Janaki Raghav<span className="text-brand-gold">.</span>
+            <div className="text-[10px] font-normal text-white/50 uppercase tracking-wider">Admin</div>
+          </div>
         </Link>
 
         <nav className="flex-1 space-y-1">

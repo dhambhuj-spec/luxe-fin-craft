@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
   Search, Phone, ArrowLeft, CheckCircle2, Circle, AlertCircle, Clock,
@@ -38,6 +38,22 @@ function TrackPage() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<TrackedLead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const p = sp.get("phone");
+    if (p) {
+      setPhone(p);
+      (async () => {
+        setLoading(true); setError(null);
+        try { const r = await track({ data: { phone: p } }); setResults(r); }
+        catch (err) { setError(err instanceof Error ? err.message : "Something went wrong"); }
+        finally { setLoading(false); }
+      })();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

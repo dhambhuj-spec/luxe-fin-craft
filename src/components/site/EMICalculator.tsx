@@ -75,9 +75,9 @@ export default function EMICalculator() {
           {/* Sliders */}
           <div className="lg:col-span-3 glass rounded-3xl p-7 md:p-9 shadow-soft border border-brand-dark/5">
             <div className="space-y-8">
-              <SliderRow label="Loan Amount" value={`₹ ${fmt(amount)}`} min={100000} max={20000000} step={50000} v={amount} onChange={setAmount} suffix="₹20Cr" prefix="₹1L" />
-              <SliderRow label="Interest Rate" value={`${rate.toFixed(2)} % p.a.`} min={6} max={20} step={0.05} v={rate} onChange={setRate} suffix="20%" prefix="6%" />
-              <SliderRow label="Tenure" value={`${tenure} Years`} min={1} max={30} step={1} v={tenure} onChange={setTenure} suffix="30 Y" prefix="1 Y" />
+              <SliderRow label="Loan Amount" value={`₹ ${fmt(amount)}`} min={100000} max={200000000} step={50000} v={amount} onChange={setAmount} suffix="₹20Cr" prefix="₹1L" unit="₹" />
+              <SliderRow label="Interest Rate" value={`${rate.toFixed(2)} % p.a.`} min={6} max={20} step={0.05} v={rate} onChange={setRate} suffix="20%" prefix="6%" unit="% p.a." decimals={2} />
+              <SliderRow label="Tenure" value={`${tenure} Years`} min={1} max={30} step={1} v={tenure} onChange={setTenure} suffix="30 Y" prefix="1 Y" unit="Years" />
             </div>
 
             <div className="mt-10 grid grid-cols-3 gap-4">

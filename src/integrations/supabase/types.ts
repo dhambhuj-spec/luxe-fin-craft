@@ -107,36 +107,51 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          interest_rate: number | null
+          loan_amount: number | null
           message: string | null
           name: string
           phone: string
           product: string | null
+          query_note: string | null
+          rejection_reason: string | null
           source: string
           stage: string
+          tenure_years: number | null
         }
         Insert: {
           amount?: string | null
           created_at?: string
           email: string
           id?: string
+          interest_rate?: number | null
+          loan_amount?: number | null
           message?: string | null
           name: string
           phone: string
           product?: string | null
+          query_note?: string | null
+          rejection_reason?: string | null
           source?: string
           stage?: string
+          tenure_years?: number | null
         }
         Update: {
           amount?: string | null
           created_at?: string
           email?: string
           id?: string
+          interest_rate?: number | null
+          loan_amount?: number | null
           message?: string | null
           name?: string
           phone?: string
           product?: string | null
+          query_note?: string | null
+          rejection_reason?: string | null
           source?: string
           stage?: string
+          tenure_years?: number | null
         }
         Relationships: []
       }

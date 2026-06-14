@@ -44,12 +44,12 @@ export default function About() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="grid lg:grid-cols-2 gap-14 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-brand-gold/10 px-3 py-1 text-xs font-semibold text-brand-dark uppercase tracking-wider">About Aurum</div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-brand-gold/10 px-3 py-1 text-xs font-semibold text-brand-dark uppercase tracking-wider">About Janaki Raghav</div>
             <h2 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-brand-dark">
               A decade of <span className="text-gradient-gold">trusted</span> financial advisory.
             </h2>
             <p className="mt-5 text-brand-dark/70 leading-relaxed">
-              Since 2014, Aurum has helped over 18,000 families and businesses unlock the right financial products
+              Since 2014, Janaki Raghav has helped over 18,000 families and businesses unlock the right financial products
               at the right rates. We are a SEBI-aware, RBI-registered DSA partnered with India's leading public &
               private sector banks, NBFCs and insurance companies.
             </p>

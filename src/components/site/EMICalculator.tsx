@@ -75,9 +75,9 @@ export default function EMICalculator() {
           {/* Sliders */}
           <div className="lg:col-span-3 glass rounded-3xl p-7 md:p-9 shadow-soft border border-brand-dark/5">
             <div className="space-y-8">
-              <SliderRow label="Loan Amount" value={`₹ ${fmt(amount)}`} min={100000} max={20000000} step={50000} v={amount} onChange={setAmount} suffix="₹20Cr" prefix="₹1L" />
-              <SliderRow label="Interest Rate" value={`${rate.toFixed(2)} % p.a.`} min={6} max={20} step={0.05} v={rate} onChange={setRate} suffix="20%" prefix="6%" />
-              <SliderRow label="Tenure" value={`${tenure} Years`} min={1} max={30} step={1} v={tenure} onChange={setTenure} suffix="30 Y" prefix="1 Y" />
+              <SliderRow label="Loan Amount" value={`₹ ${fmt(amount)}`} min={100000} max={200000000} step={50000} v={amount} onChange={setAmount} suffix="₹20Cr" prefix="₹1L" unit="₹" />
+              <SliderRow label="Interest Rate" value={`${rate.toFixed(2)} % p.a.`} min={6} max={20} step={0.05} v={rate} onChange={setRate} suffix="20%" prefix="6%" unit="% p.a." decimals={2} />
+              <SliderRow label="Tenure" value={`${tenure} Years`} min={1} max={30} step={1} v={tenure} onChange={setTenure} suffix="30 Y" prefix="1 Y" unit="Years" />
             </div>
 
             <div className="mt-10 grid grid-cols-3 gap-4">
@@ -152,17 +152,33 @@ export default function EMICalculator() {
   );
 }
 
-function SliderRow({ label, value, min, max, step, v, onChange, prefix, suffix }: {
+function SliderRow({ label, value, min, max, step, v, onChange, prefix, suffix, unit, decimals = 0 }: {
   label: string; value: string; min: number; max: number; step: number; v: number;
-  onChange: (n: number) => void; prefix: string; suffix: string;
+  onChange: (n: number) => void; prefix: string; suffix: string; unit?: string; decimals?: number;
 }) {
   const pct = ((v - min) / (max - min)) * 100;
+  const clamp = (n: number) => Math.min(max, Math.max(min, n));
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between gap-3 mb-3">
         <span className="text-sm font-medium text-brand-dark/70">{label}</span>
-        <span className="text-base font-bold text-brand-dark">{value}</span>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={min}
+            max={max}
+            step={step}
+            value={Number(v.toFixed(decimals))}
+            onChange={(e) => {
+              const n = parseFloat(e.target.value);
+              if (!isNaN(n)) onChange(clamp(n));
+            }}
+            className="w-28 sm:w-32 rounded-xl bg-white border border-brand-dark/10 px-3 py-1.5 text-right text-sm font-bold text-brand-dark focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none"
+          />
+          {unit && <span className="text-xs font-semibold text-brand-dark/60 min-w-[2.5rem]">{unit}</span>}
+        </div>
       </div>
+      <div className="text-right text-[11px] text-brand-dark/40 -mt-2 mb-2">{value}</div>
       <div className="relative h-2 rounded-full bg-brand-dark/10">
         <div className="absolute inset-y-0 left-0 rounded-full gradient-gold" style={{ width: `${pct}%` }} />
         <input

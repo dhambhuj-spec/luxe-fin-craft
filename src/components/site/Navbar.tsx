@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import logo from "@/assets/janaki-raghav-logo.png.asset.json";
 
 const links = [
   { href: "#services", label: "Services" },
@@ -33,13 +34,11 @@ export default function Navbar() {
             scrolled ? "glass shadow-soft" : "bg-transparent"
           }`}
         >
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 rounded-xl gradient-gold grid place-items-center shadow-gold">
-              <span className="font-black text-brand-dark text-lg">A</span>
-            </div>
-            <div className="leading-none">
-              <div className="font-bold text-brand-dark tracking-tight text-lg">Aurum<span className="text-brand-gold">.</span></div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Financial Advisory</div>
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <img src={logo.url} alt="Janaki Raghav Finserve" className="h-11 w-11 object-contain drop-shadow-md" />
+            <div className="leading-tight">
+              <div className="font-bold text-brand-dark tracking-tight text-base sm:text-lg">Janaki Raghav<span className="text-brand-gold">.</span></div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Finserve</div>
             </div>
           </Link>
 
@@ -56,6 +55,7 @@ export default function Navbar() {
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
+            <Link to="/track" className="text-sm font-medium text-brand-dark/70 hover:text-brand-dark">Track Loan</Link>
             <Link to="/admin" className="text-sm font-medium text-brand-dark/70 hover:text-brand-dark">Admin</Link>
             <a
               href="#contact"
@@ -88,6 +88,7 @@ export default function Navbar() {
                   {l.label}
                 </a>
               ))}
+              <Link to="/track" onClick={() => setOpen(false)} className="px-3 py-3 text-sm font-medium text-brand-dark/80 border-b border-brand-dark/5">Track Loan</Link>
               <Link to="/admin" onClick={() => setOpen(false)} className="px-3 py-3 text-sm font-medium text-brand-dark/80">Admin</Link>
               <a href="#contact" onClick={() => setOpen(false)} className="mt-2 inline-flex justify-center rounded-full bg-brand-dark px-5 py-3 text-sm font-semibold text-white">
                 Apply Now

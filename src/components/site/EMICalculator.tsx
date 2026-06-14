@@ -152,17 +152,33 @@ export default function EMICalculator() {
   );
 }
 
-function SliderRow({ label, value, min, max, step, v, onChange, prefix, suffix }: {
+function SliderRow({ label, value, min, max, step, v, onChange, prefix, suffix, unit, decimals = 0 }: {
   label: string; value: string; min: number; max: number; step: number; v: number;
-  onChange: (n: number) => void; prefix: string; suffix: string;
+  onChange: (n: number) => void; prefix: string; suffix: string; unit?: string; decimals?: number;
 }) {
   const pct = ((v - min) / (max - min)) * 100;
+  const clamp = (n: number) => Math.min(max, Math.max(min, n));
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between gap-3 mb-3">
         <span className="text-sm font-medium text-brand-dark/70">{label}</span>
-        <span className="text-base font-bold text-brand-dark">{value}</span>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={min}
+            max={max}
+            step={step}
+            value={Number(v.toFixed(decimals))}
+            onChange={(e) => {
+              const n = parseFloat(e.target.value);
+              if (!isNaN(n)) onChange(clamp(n));
+            }}
+            className="w-28 sm:w-32 rounded-xl bg-white border border-brand-dark/10 px-3 py-1.5 text-right text-sm font-bold text-brand-dark focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none"
+          />
+          {unit && <span className="text-xs font-semibold text-brand-dark/60 min-w-[2.5rem]">{unit}</span>}
+        </div>
       </div>
+      <div className="text-right text-[11px] text-brand-dark/40 -mt-2 mb-2">{value}</div>
       <div className="relative h-2 rounded-full bg-brand-dark/10">
         <div className="absolute inset-y-0 left-0 rounded-full gradient-gold" style={{ width: `${pct}%` }} />
         <input

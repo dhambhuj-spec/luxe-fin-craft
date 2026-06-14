@@ -74,10 +74,10 @@ export default function Contact() {
               <div className="relative space-y-5">
                 <h3 className="font-bold text-xl">Reach us</h3>
                 {[
-                  { icon: Phone, l: "Phone", v: "+91 1800 123 4567" },
-                  { icon: Mail, l: "Email", v: "advisory@aurum.finance" },
-                  { icon: MapPin, l: "Office", v: "Level 14, Maker Maxity, BKC, Mumbai 400051" },
-                  { icon: Clock, l: "Hours", v: "Mon–Sat · 9:30 AM – 7:30 PM" },
+                  { icon: Phone, l: "Phone", v: "+91 98765 43210" },
+                  { icon: Mail, l: "Email", v: "janakiraghavfin@gmail.com" },
+                  { icon: MapPin, l: "Office", v: "Office No. 15, Pankaj Complex, New Station Road, Bhuj (M+OG), Taluka Bhuj, District Kachchh, Gujarat" },
+                  { icon: Clock, l: "Hours", v: "Mon–Sat · 10:00 AM – 8:00 PM" },
                 ].map(c => (
                   <div key={c.l} className="flex items-start gap-3">
                     <div className="h-9 w-9 rounded-xl bg-white/10 grid place-items-center flex-shrink-0"><c.icon size={15} className="text-brand-gold" /></div>
@@ -101,7 +101,7 @@ export default function Contact() {
                 <circle cx="220" cy="110" r="8" fill="#303642" />
                 <circle cx="220" cy="110" r="3" fill="#FFBD59" />
               </svg>
-              <div className="absolute bottom-3 left-3 glass rounded-xl px-3 py-2 text-xs font-semibold text-brand-dark">📍 BKC, Mumbai HQ</div>
+              <div className="absolute bottom-3 left-3 glass rounded-xl px-3 py-2 text-xs font-semibold text-brand-dark">📍 Bhuj, Kachchh HQ</div>
             </div>
           </div>
         </div>

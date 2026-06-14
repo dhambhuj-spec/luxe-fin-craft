@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import logo from "@/assets/janaki-raghav-logo.png.asset.json";
 import {
   LayoutDashboard, FileText, Users, Settings, LogOut, Bell, Search,
   Plus, Upload, Image as ImgIcon, MoreHorizontal, TrendingUp,
-  Eye, Edit3, Trash2, ChevronDown, Building2, X, Percent, Save, Check,
+  Eye, Edit3, Trash2, ChevronDown, Building2, X, Percent, Save, Check, Copy,
   Mail, Phone, MessageCircle, Filter, ArrowUpRight, Shield, Globe, Palette, CreditCard, Lock,
 } from "lucide-react";
 

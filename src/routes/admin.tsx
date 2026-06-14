@@ -549,37 +549,103 @@ function UploadField({ icon: Icon, label, hint }: any) {
 
 /* -------------------- LEADS -------------------- */
 
-type Lead = {
-  id: string; name: string; email: string; phone: string; product: string;
-  amount: string; source: string; stage: "New" | "Contacted" | "Qualified" | "Converted" | "Lost"; date: string;
-};
+type LeadStage =
+  | "New"
+  | "Document Collected"
+  | "Cibil Check"
+  | "Login"
+  | "Query"
+  | "Sanctioned"
+  | "In Disbursement"
+  | "Disbursed"
+  | "Rejected";
 
-const initialLeads: Lead[] = [
-  { id: "L-1042", name: "Aarav Mehta", email: "aarav.mehta@gmail.com", phone: "+91 98201 12345", product: "Home Loan", amount: "₹85 L", source: "Website", stage: "New", date: "01 Jun 2026" },
-  { id: "L-1041", name: "Priya Iyer", email: "priya.iyer@outlook.com", phone: "+91 99880 22113", product: "Business Loan", amount: "₹40 L", source: "WhatsApp", stage: "Contacted", date: "31 May 2026" },
-  { id: "L-1040", name: "Rohit Khanna", email: "rohit.k@company.in", phone: "+91 90011 87654", product: "Car Loan", amount: "₹12 L", source: "Brochure", stage: "Qualified", date: "30 May 2026" },
-  { id: "L-1039", name: "Sneha Rao", email: "sneha.rao@gmail.com", phone: "+91 98456 99002", product: "Loan Against Property", amount: "₹1.2 Cr", source: "Referral", stage: "Converted", date: "28 May 2026" },
-  { id: "L-1038", name: "Imran Sayed", email: "imran.s@yahoo.com", phone: "+91 90909 12321", product: "Personal Loan", amount: "₹8 L", source: "Instagram", stage: "Lost", date: "26 May 2026" },
-  { id: "L-1037", name: "Kavya Nair", email: "kavya.nair@gmail.com", phone: "+91 97123 45678", product: "Home Loan", amount: "₹55 L", source: "Website", stage: "Contacted", date: "25 May 2026" },
-  { id: "L-1036", name: "Vikram Singh", email: "vikram@sg.in", phone: "+91 98111 23456", product: "Gold Loan", amount: "₹3 L", source: "Walk-in", stage: "New", date: "24 May 2026" },
+const ALL_STAGES: LeadStage[] = [
+  "New", "Document Collected", "Cibil Check", "Login", "Query",
+  "Sanctioned", "In Disbursement", "Disbursed", "Rejected",
 ];
 
-const stageStyle: Record<Lead["stage"], string> = {
-  New: "bg-blue-100 text-blue-700",
-  Contacted: "bg-amber-100 text-amber-700",
-  Qualified: "bg-violet-100 text-violet-700",
-  Converted: "bg-emerald-100 text-emerald-700",
-  Lost: "bg-rose-100 text-rose-700",
+type Lead = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  product: string | null;
+  amount: string | null;
+  source: string;
+  stage: string;
+  query_note: string | null;
+  rejection_reason: string | null;
+  loan_amount: number | null;
+  interest_rate: number | null;
+  tenure_years: number | null;
+  created_at: string;
+  message?: string | null;
+};
+
+const stageStyle: Record<string, string> = {
+  "New": "bg-blue-100 text-blue-700",
+  "Document Collected": "bg-sky-100 text-sky-700",
+  "Cibil Check": "bg-indigo-100 text-indigo-700",
+  "Login": "bg-violet-100 text-violet-700",
+  "Query": "bg-amber-100 text-amber-700",
+  "Sanctioned": "bg-teal-100 text-teal-700",
+  "In Disbursement": "bg-cyan-100 text-cyan-700",
+  "Disbursed": "bg-emerald-100 text-emerald-700",
+  "Rejected": "bg-rose-100 text-rose-700",
 };
 
 function LeadsView() {
-  const [leads, setLeads] = useState<Lead[]>(initialLeads);
-  const [filter, setFilter] = useState<Lead["stage"] | "All">("All");
-  const stages: (Lead["stage"] | "All")[] = ["All", "New", "Contacted", "Qualified", "Converted", "Lost"];
-  const visible = filter === "All" ? leads : leads.filter(l => l.stage === filter);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<string>("All");
+  const [search, setSearch] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<Lead | null>(null);
 
-  const updateStage = (id: string, stage: Lead["stage"]) =>
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) toast.error(error.message);
+    setLeads((data ?? []) as Lead[]);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return leads.filter(l =>
+      (filter === "All" || l.stage === filter) &&
+      (!q || l.name.toLowerCase().includes(q) || l.phone.includes(q) || (l.email || "").toLowerCase().includes(q))
+    );
+  }, [leads, filter, search]);
+
+  const updateStage = async (id: string, stage: string) => {
     setLeads(ls => ls.map(l => l.id === id ? { ...l, stage } : l));
+    const { error } = await supabase.from("leads").update({ stage }).eq("id", id);
+    if (error) { toast.error(error.message); load(); }
+    else toast.success(`Stage updated to ${stage}`);
+  };
+
+  const deleteLead = async (id: string) => {
+    if (!confirm("Delete this lead permanently?")) return;
+    setLeads(ls => ls.filter(l => l.id !== id));
+    const { error } = await supabase.from("leads").delete().eq("id", id);
+    if (error) { toast.error(error.message); load(); }
+    else toast.success("Lead deleted");
+  };
+
+  const copyTrackLink = (phone: string) => {
+    const digits = phone.replace(/\D/g, "").slice(-10);
+    const url = `${window.location.origin}/track?phone=${digits}`;
+    navigator.clipboard.writeText(url).then(() => toast.success("Tracking link copied"));
+  };
+
+  const counts: Record<string, number> = {};
+  ALL_STAGES.forEach(s => { counts[s] = leads.filter(l => l.stage === s).length; });
 
   return (
     <>
@@ -587,38 +653,43 @@ function LeadsView() {
         <div>
           <div className="text-xs text-slate-500">CRM</div>
           <h1 className="text-2xl font-bold mt-0.5 flex items-center gap-2"><Users size={20} className="text-brand-gold"/> Leads</h1>
-          <p className="text-sm text-slate-500 mt-1">Track and qualify every inbound enquiry across products.</p>
+          <p className="text-sm text-slate-500 mt-1">Track and qualify every enquiry across products. Add leads from outside sources here.</p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-xl bg-brand-dark text-white text-sm font-semibold px-4 py-2 hover:bg-brand-dark/90">
-          <Plus size={14}/> Add lead
+        <button onClick={() => setShowAdd(true)} className="inline-flex items-center gap-2 rounded-xl bg-brand-dark text-white text-sm font-semibold px-4 py-2 hover:bg-brand-dark/90">
+          <Plus size={14}/> Add new lead
         </button>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        {stages.slice(1).map(s => {
-          const count = leads.filter(l => l.stage === s).length;
-          return (
-            <div key={s} className="rounded-2xl bg-white border border-slate-200 p-4">
-              <div className={`inline-block text-[10px] font-bold uppercase px-2 py-1 rounded-full ${stageStyle[s as Lead["stage"]]}`}>{s}</div>
-              <div className="mt-2 text-2xl font-bold">{count}</div>
-              <div className="text-xs text-slate-500">leads in pipeline</div>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {ALL_STAGES.slice(0, 5).map(s => (
+          <div key={s} className="rounded-2xl bg-white border border-slate-200 p-4">
+            <div className={`inline-block text-[10px] font-bold uppercase px-2 py-1 rounded-full ${stageStyle[s]}`}>{s}</div>
+            <div className="mt-2 text-2xl font-bold">{counts[s]}</div>
+            <div className="text-xs text-slate-500">in pipeline</div>
+          </div>
+        ))}
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-5 border-b border-slate-200">
-          <h3 className="font-bold flex items-center gap-2"><Filter size={14} className="text-brand-gold"/> Filter by stage</h3>
+          <div className="flex items-center gap-2 flex-1 max-w-md rounded-xl bg-slate-100 px-3 py-2">
+            <Search size={14} className="text-slate-400" />
+            <input
+              placeholder="Search by name, phone or email…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 bg-transparent outline-none text-sm" />
+          </div>
           <div className="flex flex-wrap gap-1.5">
-            {stages.map(s => (
+            {["All", ...ALL_STAGES].map(s => (
               <button key={s} onClick={() => setFilter(s)}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-full border transition-colors ${
                   filter === s ? "bg-brand-dark text-white border-brand-dark" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                 }`}>{s}</button>
             ))}
           </div>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500 tracking-wider">
@@ -626,15 +697,15 @@ function LeadsView() {
                 <th className="text-left font-semibold px-5 py-3">Lead</th>
                 <th className="text-left font-semibold px-5 py-3">Contact</th>
                 <th className="text-left font-semibold px-5 py-3">Product</th>
-                <th className="text-left font-semibold px-5 py-3">Amount</th>
+                <th className="text-left font-semibold px-5 py-3">Loan</th>
                 <th className="text-left font-semibold px-5 py-3">Source</th>
                 <th className="text-left font-semibold px-5 py-3">Stage</th>
-                <th className="text-left font-semibold px-5 py-3">Date</th>
                 <th className="text-right font-semibold px-5 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {visible.map(l => (
+              {loading && <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">Loading leads…</td></tr>}
+              {!loading && visible.map(l => (
                 <tr key={l.id} className="border-t border-slate-100 hover:bg-slate-50/50">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
@@ -643,7 +714,7 @@ function LeadsView() {
                       </div>
                       <div>
                         <div className="font-semibold">{l.name}</div>
-                        <div className="text-[11px] text-slate-500">{l.id}</div>
+                        <div className="text-[11px] text-slate-500">#{l.id.slice(0,8).toUpperCase()}</div>
                       </div>
                     </div>
                   </td>
@@ -651,34 +722,244 @@ function LeadsView() {
                     <div className="flex items-center gap-1.5 text-xs"><Mail size={11}/> {l.email}</div>
                     <div className="flex items-center gap-1.5 text-xs mt-0.5"><Phone size={11}/> {l.phone}</div>
                   </td>
-                  <td className="px-5 py-4 text-slate-700">{l.product}</td>
-                  <td className="px-5 py-4 font-semibold">{l.amount}</td>
+                  <td className="px-5 py-4 text-slate-700">{l.product ?? "—"}</td>
+                  <td className="px-5 py-4">
+                    <div className="font-semibold">{l.loan_amount ? `₹${new Intl.NumberFormat("en-IN").format(l.loan_amount)}` : (l.amount ?? "—")}</div>
+                    <div className="text-[11px] text-slate-500">{l.interest_rate ? `${Number(l.interest_rate).toFixed(2)}% · ${l.tenure_years ?? "—"} Y` : "—"}</div>
+                  </td>
                   <td className="px-5 py-4 text-slate-600">{l.source}</td>
                   <td className="px-5 py-4">
-                    <select value={l.stage} onChange={(e) => updateStage(l.id, e.target.value as Lead["stage"])}
-                      className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full border-0 outline-none cursor-pointer ${stageStyle[l.stage]}`}>
-                      {stages.slice(1).map(s => <option key={s} value={s}>{s}</option>)}
+                    <select value={l.stage} onChange={(e) => updateStage(l.id, e.target.value)}
+                      className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full border-0 outline-none cursor-pointer ${stageStyle[l.stage] ?? "bg-slate-100 text-slate-600"}`}>
+                      {ALL_STAGES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </td>
-                  <td className="px-5 py-4 text-slate-500 text-xs">{l.date}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <button title="Call" className="h-8 w-8 rounded-lg hover:bg-emerald-50 grid place-items-center text-emerald-600"><Phone size={14}/></button>
-                      <button title="WhatsApp" className="h-8 w-8 rounded-lg hover:bg-emerald-50 grid place-items-center text-emerald-600"><MessageCircle size={14}/></button>
-                      <button title="Email" className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Mail size={14}/></button>
-                      <button title="Delete" onClick={() => setLeads(ls => ls.filter(x => x.id !== l.id))} className="h-8 w-8 rounded-lg hover:bg-rose-50 grid place-items-center text-rose-500"><Trash2 size={14}/></button>
+                      <button title="Edit / Process" onClick={() => setEditing(l)} className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-600"><Edit3 size={14}/></button>
+                      <button title="Copy tracking link" onClick={() => copyTrackLink(l.phone)} className="h-8 w-8 rounded-lg hover:bg-amber-50 grid place-items-center text-amber-600"><Copy size={14}/></button>
+                      <a title="Call" href={`tel:${l.phone}`} className="h-8 w-8 rounded-lg hover:bg-emerald-50 grid place-items-center text-emerald-600"><Phone size={14}/></a>
+                      <a title="WhatsApp" target="_blank" rel="noreferrer" href={`https://wa.me/${l.phone.replace(/\D/g,"")}`} className="h-8 w-8 rounded-lg hover:bg-emerald-50 grid place-items-center text-emerald-600"><MessageCircle size={14}/></a>
+                      <a title="Email" href={`mailto:${l.email}`} className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Mail size={14}/></a>
+                      <button title="Delete" onClick={() => deleteLead(l.id)} className="h-8 w-8 rounded-lg hover:bg-rose-50 grid place-items-center text-rose-500"><Trash2 size={14}/></button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {visible.length === 0 && (
-                <tr><td colSpan={8} className="px-5 py-12 text-center text-slate-400 text-sm">No leads in this stage yet.</td></tr>
+              {!loading && visible.length === 0 && (
+                <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">No leads match your filter.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {showAdd && <AddLeadModal onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
+      {editing && <EditLeadDrawer lead={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </>
+  );
+}
+
+const PRODUCTS = ["Home Loan", "Loan Against Property", "Car Loan", "Business Loan", "Personal Loan", "Gold Loan", "Education Loan", "Health Insurance", "Motor Insurance", "Term Life Insurance"];
+const SOURCES = ["Website", "WhatsApp", "Walk-in", "Referral", "Instagram", "Facebook", "Google Ads", "Phone Call", "Brochure", "Other"];
+
+function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    name: "", phone: "", email: "", product: "Home Loan", source: "Walk-in",
+    loan_amount: 5000000, interest_rate: 8.4, tenure_years: 20,
+    stage: "New" as string, message: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const set = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm(f => ({ ...f, [k]: v }));
+
+  const save = async () => {
+    if (!form.name || !form.phone) { toast.error("Name and phone are required"); return; }
+    setBusy(true);
+    const { error } = await supabase.from("leads").insert({
+      name: form.name, phone: form.phone, email: form.email || `${form.phone.replace(/\D/g,"")}@noemail.local`,
+      product: form.product, source: form.source, stage: form.stage,
+      loan_amount: form.loan_amount, interest_rate: form.interest_rate, tenure_years: form.tenure_years,
+      amount: `₹${new Intl.NumberFormat("en-IN").format(form.loan_amount)}`,
+      message: form.message || null,
+    });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Lead added"); onSaved();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-brand-dark/40 backdrop-blur-sm grid place-items-center p-4 overflow-y-auto" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+          <div>
+            <h3 className="font-bold text-lg">Add new lead</h3>
+            <p className="text-xs text-slate-500">Capture a lead from outside sources (walk-in, phone, referral, etc.)</p>
+          </div>
+          <button onClick={onClose} className="h-9 w-9 rounded-lg hover:bg-slate-100 grid place-items-center"><X size={16}/></button>
+        </div>
+        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <AField label="Full name *" value={form.name} onChange={(v) => set("name", v)} placeholder="Customer name"/>
+            <AField label="Phone *" value={form.phone} onChange={(v) => set("phone", v)} placeholder="+91 98XXX XXXXX"/>
+            <AField label="Email" value={form.email} onChange={(v) => set("email", v)} placeholder="optional"/>
+            <ASelect label="Loan product" opts={PRODUCTS} value={form.product} onChange={(v) => set("product", v)}/>
+            <ASelect label="Source" opts={SOURCES} value={form.source} onChange={(v) => set("source", v)}/>
+            <ASelect label="Initial stage" opts={ALL_STAGES} value={form.stage} onChange={(v) => set("stage", v)}/>
+          </div>
+
+          <SliderInputRow label="Loan Amount" value={form.loan_amount} min={100000} max={200000000} step={50000} unit="₹" onChange={(v) => set("loan_amount", v)} prefix="₹1L" suffix="₹20Cr"/>
+          <SliderInputRow label="Interest Rate" value={form.interest_rate} min={6} max={20} step={0.05} unit="% p.a." decimals={2} onChange={(v) => set("interest_rate", v)} prefix="6%" suffix="20%"/>
+          <SliderInputRow label="Tenure" value={form.tenure_years} min={1} max={30} step={1} unit="Years" onChange={(v) => set("tenure_years", v)} prefix="1 Y" suffix="30 Y"/>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Notes</label>
+            <textarea rows={3} value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Internal notes about this lead…" className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none"/>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Cancel</button>
+            <button disabled={busy} onClick={save} className="rounded-xl bg-brand-dark text-white px-4 py-2 text-sm font-semibold hover:bg-brand-dark/90 inline-flex items-center gap-2 disabled:opacity-60">
+              <Save size={14}/> {busy ? "Saving…" : "Save lead"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    stage: lead.stage,
+    query_note: lead.query_note ?? "",
+    rejection_reason: lead.rejection_reason ?? "",
+    loan_amount: lead.loan_amount ?? 5000000,
+    interest_rate: lead.interest_rate ?? 8.4,
+    tenure_years: lead.tenure_years ?? 20,
+    product: lead.product ?? "Home Loan",
+    source: lead.source,
+  });
+  const [busy, setBusy] = useState(false);
+  const set = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm(f => ({ ...f, [k]: v }));
+
+  const save = async () => {
+    setBusy(true);
+    const { error } = await supabase.from("leads").update({
+      stage: form.stage,
+      query_note: form.query_note || null,
+      rejection_reason: form.stage === "Rejected" ? (form.rejection_reason || null) : null,
+      loan_amount: form.loan_amount,
+      interest_rate: form.interest_rate,
+      tenure_years: form.tenure_years,
+      product: form.product,
+      source: form.source,
+      amount: `₹${new Intl.NumberFormat("en-IN").format(form.loan_amount)}`,
+    }).eq("id", lead.id);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Lead updated"); onSaved();
+  };
+
+  const trackUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/track?phone=${lead.phone.replace(/\D/g,"").slice(-10)}`
+    : "";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-brand-dark/40 backdrop-blur-sm flex justify-end" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white shadow-2xl w-full max-w-xl h-full overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200 sticky top-0 bg-white z-10">
+          <div>
+            <h3 className="font-bold text-lg">Process: {lead.name}</h3>
+            <p className="text-xs text-slate-500">{lead.phone} · {lead.email}</p>
+          </div>
+          <button onClick={onClose} className="h-9 w-9 rounded-lg hover:bg-slate-100 grid place-items-center"><X size={16}/></button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          <div className="rounded-2xl bg-brand-gold/10 border border-brand-gold/30 p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-brand-dark/60">Customer tracking link</div>
+              <div className="text-xs text-brand-dark truncate">{trackUrl}</div>
+            </div>
+            <button onClick={() => { navigator.clipboard.writeText(trackUrl); toast.success("Copied"); }}
+              className="text-xs font-bold rounded-lg bg-brand-dark text-white px-3 py-1.5 inline-flex items-center gap-1.5"><Copy size={12}/> Copy</button>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <ASelect label="Loan product" opts={PRODUCTS} value={form.product} onChange={(v) => set("product", v)}/>
+            <ASelect label="Source" opts={SOURCES} value={form.source} onChange={(v) => set("source", v)}/>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-2">Loan process stage</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {ALL_STAGES.map(s => (
+                <button key={s} onClick={() => set("stage", s)}
+                  className={`text-[11px] font-semibold px-3 py-2 rounded-xl border transition-all ${
+                    form.stage === s ? `${stageStyle[s]} border-current shadow-sm` : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}>{s}</button>
+              ))}
+            </div>
+          </div>
+
+          {form.stage === "Query" && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Query details <span className="text-amber-600">(shown to customer)</span></label>
+              <textarea rows={3} value={form.query_note} onChange={(e) => set("query_note", e.target.value)} placeholder="What document or info is needed?" className="w-full rounded-xl border border-amber-200 bg-amber-50/30 px-3.5 py-2.5 text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none"/>
+            </div>
+          )}
+
+          {form.stage === "Rejected" && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Rejection reason <span className="text-rose-600">(shown to customer)</span></label>
+              <textarea rows={3} value={form.rejection_reason} onChange={(e) => set("rejection_reason", e.target.value)} placeholder="Reason for rejection…" className="w-full rounded-xl border border-rose-200 bg-rose-50/30 px-3.5 py-2.5 text-sm focus:border-rose-400 focus:ring-2 focus:ring-rose-100 outline-none"/>
+            </div>
+          )}
+
+          <SliderInputRow label="Loan Amount" value={form.loan_amount} min={100000} max={200000000} step={50000} unit="₹" onChange={(v) => set("loan_amount", v)} prefix="₹1L" suffix="₹20Cr"/>
+          <SliderInputRow label="Interest Rate" value={form.interest_rate} min={6} max={20} step={0.05} unit="% p.a." decimals={2} onChange={(v) => set("interest_rate", v)} prefix="6%" suffix="20%"/>
+          <SliderInputRow label="Tenure" value={form.tenure_years} min={1} max={30} step={1} unit="Years" onChange={(v) => set("tenure_years", v)} prefix="1 Y" suffix="30 Y"/>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Cancel</button>
+            <button disabled={busy} onClick={save} className="rounded-xl bg-brand-dark text-white px-4 py-2 text-sm font-semibold hover:bg-brand-dark/90 inline-flex items-center gap-2 disabled:opacity-60">
+              <Save size={14}/> {busy ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SliderInputRow({ label, value, min, max, step, unit, decimals = 0, onChange, prefix, suffix }: {
+  label: string; value: number; min: number; max: number; step: number; unit?: string;
+  decimals?: number; onChange: (n: number) => void; prefix: string; suffix: string;
+}) {
+  const pct = ((value - min) / (max - min)) * 100;
+  const clamp = (n: number) => Math.min(max, Math.max(min, n));
+  const display = unit === "₹" ? `₹ ${new Intl.NumberFormat("en-IN").format(Math.round(value))}` : `${value.toFixed(decimals)}${unit ? ` ${unit}` : ""}`;
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <label className="text-xs font-semibold text-slate-700">{label}</label>
+        <div className="flex items-center gap-2">
+          <input type="number" min={min} max={max} step={step} value={Number(value.toFixed(decimals))}
+            onChange={(e) => { const n = parseFloat(e.target.value); if (!isNaN(n)) onChange(clamp(n)); }}
+            className="w-32 rounded-lg border border-slate-200 px-2.5 py-1.5 text-right text-sm font-bold focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none"/>
+          {unit && <span className="text-[11px] font-semibold text-slate-500 min-w-[3rem]">{unit}</span>}
+        </div>
+      </div>
+      <div className="text-right text-[10px] text-slate-400 mb-1.5">{display}</div>
+      <div className="relative h-2 rounded-full bg-slate-100">
+        <div className="absolute inset-y-0 left-0 rounded-full gradient-gold" style={{ width: `${pct}%` }}/>
+        <input type="range" min={min} max={max} step={step} value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          className="absolute inset-0 w-full opacity-0 cursor-pointer"/>
+        <div className="absolute top-1/2 -translate-y-1/2 -ml-2.5 h-5 w-5 rounded-full bg-white border-2 border-brand-gold shadow pointer-events-none" style={{ left: `${pct}%` }}/>
+      </div>
+      <div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>{prefix}</span><span>{suffix}</span></div>
+    </div>
   );
 }
 

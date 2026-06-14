@@ -1137,8 +1137,8 @@ function SettingsView() {
             <>
               <SectionHead title="Company" subtitle="Public details shown on invoices and the website." />
               <div className="grid sm:grid-cols-2 gap-4">
-                <AField label="Legal name" value="Aurum Financial Services Pvt. Ltd." />
-                <AField label="Brand name" value="Aurum" />
+                <AField label="Legal name" value="Janaki Raghav Finserve" />
+                <AField label="Brand name" value="Janaki Raghav" />
                 <AField label="GSTIN" value="27ABCDE1234F1Z5" />
                 <AField label="PAN" value="ABCDE1234F" />
                 <AField label="Support email" value="hello@aurum.finance" />
@@ -1156,7 +1156,7 @@ function SettingsView() {
                 <ToggleRow label="Brochure downloaded" hint="Daily digest of all brochure downloads" defaultOn/>
                 <ToggleRow label="Loan EMI calculator used" hint="Notify when high-value calculations happen" />
                 <ToggleRow label="Weekly performance report" hint="Every Monday 9 AM" defaultOn/>
-                <ToggleRow label="Product updates from Aurum" hint="Roadmap & feature announcements" />
+                <ToggleRow label="Product updates from Janaki Raghav" hint="Roadmap & feature announcements" />
               </div>
               <SaveRow />
             </>
@@ -1185,7 +1185,7 @@ function SettingsView() {
               <div className="rounded-2xl bg-gradient-to-br from-brand-dark to-brand-dark/90 text-white p-5 flex items-center justify-between">
                 <div>
                   <div className="text-xs text-white/60 uppercase tracking-wider">Current plan</div>
-                  <div className="text-2xl font-bold text-gradient-gold mt-1">Aurum Enterprise</div>
+                  <div className="text-2xl font-bold text-gradient-gold mt-1">Janaki Raghav Pro</div>
                   <div className="text-xs text-white/70 mt-1">Renews on 12 Mar 2027 · ₹49,999/year</div>
                 </div>
                 <button className="rounded-xl bg-brand-gold text-brand-dark text-sm font-semibold px-4 py-2">Manage plan</button>

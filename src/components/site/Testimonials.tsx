@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from "motion/react";
 import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react";
 
 const items = [
-  { name: "Aarav Mehta", role: "Home Loan Customer", text: "Aurum got me a rate 0.45% lower than what I'd been quoted directly by the bank. The advisor walked me through every step — felt like a private banker.", rating: 5, init: "AM" },
+  { name: "Aarav Mehta", role: "Home Loan Customer", text: "Janaki Raghav got me a rate 0.45% lower than what I'd been quoted directly by the bank. The advisor walked me through every step — felt like a private banker.", rating: 5, init: "AM" },
   { name: "Priya Sharma", role: "Business Loan", text: "Sanctioned ₹35 lakh in 4 working days without collateral. Their team handled all the paperwork — I just had to sign.", rating: 5, init: "PS" },
   { name: "Rohan Iyer", role: "Health Insurance", text: "Compared 9 plans on one screen and got cashless coverage activated for my family the same day. Outstanding service.", rating: 5, init: "RI" },
-  { name: "Neha Kapoor", role: "Car Loan", text: "100% on-road financing on my new SUV at a fantastic rate. Aurum's relationship manager was always reachable.", rating: 5, init: "NK" },
+  { name: "Neha Kapoor", role: "Car Loan", text: "100% on-road financing on my new SUV at a fantastic rate. Janaki Raghav's relationship manager was always reachable.", rating: 5, init: "NK" },
 ];
 
 export default function Testimonials() {

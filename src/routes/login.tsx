@@ -49,7 +49,7 @@ function LoginPage() {
           <div className="h-10 w-10 rounded-xl gradient-gold grid place-items-center">
             <span className="font-black text-brand-dark text-lg">A</span>
           </div>
-          <div className="text-white font-bold text-xl">Aurum<span className="text-brand-gold">.</span></div>
+          <div className="text-white font-bold text-xl">Janaki Raghav<span className="text-brand-gold">.</span></div>
         </Link>
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
           <h1 className="text-2xl font-bold text-white">

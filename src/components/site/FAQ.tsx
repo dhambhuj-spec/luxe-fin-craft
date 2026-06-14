@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 const faqs = [
   { q: "What documents do I need for a home loan application?", a: "PAN, Aadhaar, last 3 months' salary slips, last 6 months' bank statements, Form 16/ITR, and property documents. Our advisor sends a personalized checklist." },
   { q: "How long does loan approval typically take?", a: "In-principle approval in 24–48 hours. Final disbursement within 5–10 working days subject to property verification and legal clearance." },
-  { q: "Is there any processing fee for using Aurum's services?", a: "Our advisory is free for borrowers — we are compensated by partner banks. You only pay the standard bank-level processing fee, never extra." },
+  { q: "Is there any processing fee for using Janaki Raghav's services?", a: "Our advisory is free for borrowers — we are compensated by partner banks. You only pay the standard bank-level processing fee, never extra." },
   { q: "Can I prepay or foreclose my loan without penalty?", a: "Floating-rate home loans have zero foreclosure charges as per RBI. For other products, we negotiate the lowest possible prepayment terms upfront." },
   { q: "Which banks and NBFCs do you partner with?", a: "We work with 40+ lenders including HDFC, SBI, ICICI, Axis, Bajaj Finserv, Tata Capital, Kotak, and leading housing finance companies." },
   { q: "Are my personal documents safe with you?", a: "Yes — we use bank-grade 256-bit encryption, strict data-access controls, and never share your information without explicit consent." },

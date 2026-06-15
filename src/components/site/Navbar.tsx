@@ -25,13 +25,15 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-        scrolled ? "py-3" : "py-5"
+        scrolled ? "bg-white shadow-lg border-b border-brand-dark/5 py-2" : "bg-transparent py-5"
       }`}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <div className={`mx-auto px-4 sm:px-6 transition-all ${scrolled ? "max-w-none" : "max-w-7xl"}`}>
         <div
-          className={`flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 transition-all bg-white border border-brand-dark/5 ${
-            scrolled ? "shadow-lg" : "shadow-soft"
+          className={`flex items-center justify-between transition-all ${
+            scrolled
+              ? "px-2 sm:px-4 py-2"
+              : "rounded-2xl px-4 sm:px-6 py-3 bg-transparent"
           }`}
         >
           <Link to="/" className="flex items-center gap-2.5 group">

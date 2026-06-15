@@ -76,7 +76,7 @@ export default function Navbar() {
         </div>
 
         {open && (
-          <div className="xl:hidden mt-2 glass rounded-2xl p-4 shadow-soft">
+          <div className="xl:hidden mt-2 bg-white border border-brand-dark/5 rounded-2xl p-4 shadow-soft">
             <div className="flex flex-col">
               {links.map((l) => (
                 <a

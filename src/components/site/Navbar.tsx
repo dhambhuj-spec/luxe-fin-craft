@@ -28,14 +28,8 @@ export default function Navbar() {
         scrolled ? "bg-white shadow-lg border-b border-brand-dark/5 py-2" : "bg-transparent py-5"
       }`}
     >
-      <div className={`mx-auto px-4 sm:px-6 transition-all ${scrolled ? "max-w-none" : "max-w-7xl"}`}>
-        <div
-          className={`flex items-center justify-between transition-all ${
-            scrolled
-              ? "px-2 sm:px-4 py-2"
-              : "rounded-2xl px-4 sm:px-6 py-3 bg-transparent"
-          }`}
-        >
+      <div className="w-full px-4 sm:px-8">
+        <div className="flex items-center justify-between py-2">
           <Link to="/" className="flex items-center gap-2.5 group">
             <img src={logo.url} alt="Janaki Raghav Finserve" className="h-11 w-11 object-contain drop-shadow-md" />
             <div className="leading-tight">

@@ -42,7 +42,7 @@ export default function Navbar() {
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-1">
             {links.map((l) => (
               <a
                 key={l.href}
@@ -54,7 +54,7 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3">
             <Link to="/track" className="text-sm font-medium text-brand-dark/70 hover:text-brand-dark">Track Loan</Link>
             <Link to="/admin" className="text-sm font-medium text-brand-dark/70 hover:text-brand-dark">Admin</Link>
             <a
@@ -68,7 +68,7 @@ export default function Navbar() {
 
           <button
             onClick={() => setOpen(!open)}
-            className="lg:hidden p-2 text-brand-dark"
+            className="xl:hidden p-2 text-brand-dark"
             aria-label="Menu"
           >
             {open ? <X size={22} /> : <Menu size={22} />}
@@ -76,7 +76,7 @@ export default function Navbar() {
         </div>
 
         {open && (
-          <div className="lg:hidden mt-2 glass rounded-2xl p-4 shadow-soft">
+          <div className="xl:hidden mt-2 glass rounded-2xl p-4 shadow-soft">
             <div className="flex flex-col">
               {links.map((l) => (
                 <a

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Calculator, TrendingUp, Wallet, PieChart } from "lucide-react";
 
@@ -158,20 +158,29 @@ function SliderRow({ label, value, min, max, step, v, onChange, prefix, suffix, 
 }) {
   const pct = ((v - min) / (max - min)) * 100;
   const clamp = (n: number) => Math.min(max, Math.max(min, n));
+  const [text, setText] = useState<string>(v.toFixed(decimals));
+  useEffect(() => { setText(v.toFixed(decimals)); }, [v, decimals]);
   return (
     <div>
       <div className="flex items-center justify-between gap-3 mb-3">
         <span className="text-sm font-medium text-brand-dark/70">{label}</span>
         <div className="flex items-center gap-2">
           <input
-            type="number"
-            min={min}
-            max={max}
-            step={step}
-            value={Number(v.toFixed(decimals))}
+            type="text"
+            inputMode="decimal"
+            value={text}
             onChange={(e) => {
-              const n = parseFloat(e.target.value);
-              if (!isNaN(n)) onChange(clamp(n));
+              const raw = e.target.value.replace(/,/g, "");
+              setText(raw);
+              const n = parseFloat(raw);
+              if (!isNaN(n) && n >= min && n <= max) onChange(n);
+            }}
+            onBlur={() => {
+              const n = parseFloat(text);
+              if (isNaN(n)) { setText(v.toFixed(decimals)); return; }
+              const c = clamp(n);
+              onChange(c);
+              setText(c.toFixed(decimals));
             }}
             className="w-28 sm:w-32 rounded-xl bg-white border border-brand-dark/10 px-3 py-1.5 text-right text-sm font-bold text-brand-dark focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none"
           />

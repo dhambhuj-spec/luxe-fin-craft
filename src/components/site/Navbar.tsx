@@ -30,8 +30,8 @@ export default function Navbar() {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div
-          className={`flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 transition-all glass shadow-soft ${
-            scrolled ? "shadow-lg" : ""
+          className={`flex items-center justify-between rounded-2xl px-4 sm:px-6 py-3 transition-all bg-white border border-brand-dark/5 ${
+            scrolled ? "shadow-lg" : "shadow-soft"
           }`}
         >
           <Link to="/" className="flex items-center gap-2.5 group">
@@ -76,7 +76,7 @@ export default function Navbar() {
         </div>
 
         {open && (
-          <div className="xl:hidden mt-2 glass rounded-2xl p-4 shadow-soft">
+          <div className="xl:hidden mt-2 bg-white border border-brand-dark/5 rounded-2xl p-4 shadow-soft">
             <div className="flex flex-col">
               {links.map((l) => (
                 <a

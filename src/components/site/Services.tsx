@@ -2,10 +2,10 @@ import { motion } from "motion/react";
 import { Home, Building2, Truck, Car, Briefcase, User, HeartPulse, Shield, Bike, ArrowUpRight } from "lucide-react";
 
 const services = [
-  { icon: Home, name: "Home Loan", desc: "Own your dream home with rates from 8.40% p.a.", rate: "8.40%" },
-  { icon: Building2, name: "Loan Against Property", desc: "Unlock equity from residential or commercial property.", rate: "9.25%" },
-  { icon: Truck, name: "Commercial Vehicle", desc: "Finance trucks, buses & fleets with flexible tenures.", rate: "10.50%" },
-  { icon: Car, name: "Car Loan", desc: "Drive home your new car with up to 100% on-road funding.", rate: "8.75%" },
+  { icon: Home, name: "Home Loan", desc: "Own your dream home with rates from 7.25% p.a.", rate: "7.25%" },
+  { icon: Building2, name: "Loan Against Property", desc: "Unlock equity from residential or commercial property.", rate: "8.50%" },
+  { icon: Truck, name: "Commercial Vehicle", desc: "Finance trucks, buses & fleets with flexible tenures.", rate: "7.50%" },
+  { icon: Car, name: "Car Loan", desc: "Drive home your new car with up to 100% on-road funding.", rate: "7.60%" },
   { icon: Briefcase, name: "Business Loan", desc: "Working capital up to ₹50L without collateral.", rate: "11.99%" },
   { icon: User, name: "Personal Loan", desc: "Instant approval in 24 hours, minimal documentation.", rate: "10.49%" },
   { icon: Shield, name: "Term Life Insurance", desc: "Comprehensive cover up to ₹2 Cr from top insurers.", rate: "₹490/mo" },

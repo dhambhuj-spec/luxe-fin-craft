@@ -46,16 +46,16 @@ export default function About() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-brand-gold/10 px-3 py-1 text-xs font-semibold text-brand-dark uppercase tracking-wider">About Janaki Raghav</div>
             <h2 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-brand-dark">
-              A decade of <span className="text-gradient-gold">trusted</span> financial advisory.
+              Six years of <span className="text-gradient-gold">trusted</span> financial advisory.
             </h2>
             <p className="mt-5 text-brand-dark/70 leading-relaxed">
-              Since 2014, Janaki Raghav has helped over 18,000 families and businesses unlock the right financial products
+              Since 2020, Janaki Raghav has helped 460+ families and businesses unlock the right financial products
               at the right rates. We are a SEBI-aware, RBI-registered DSA partnered with India's leading public &
               private sector banks, NBFCs and insurance companies.
             </p>
             <ul className="mt-8 space-y-3">
               {[
-                "Curated offers from 40+ banks & NBFCs",
+                "Curated offers from 180+ banks & NBFCs",
                 "Dedicated relationship manager for every client",
                 "Zero hidden charges — full rate-card transparency",
                 "End-to-end documentation handled by experts",
@@ -76,7 +76,7 @@ export default function About() {
             className="grid grid-cols-2 gap-5"
           >
             <div className="rounded-3xl bg-white p-7 shadow-soft border border-brand-dark/5">
-              <Stat value={18500} suffix="+" label="Happy customers" icon={Users} />
+              <Stat value={460} suffix="+" label="Happy customers" icon={Users} />
             </div>
             <div className="rounded-3xl gradient-dark p-7 text-white relative overflow-hidden">
               <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-brand-gold/30 blur-3xl" />
@@ -84,15 +84,15 @@ export default function About() {
                 <div className="inline-flex h-10 w-10 rounded-xl bg-white/10 items-center justify-center mb-3">
                   <Banknote size={18} className="text-brand-gold" />
                 </div>
-                <div className="text-4xl md:text-5xl font-bold tracking-tight"><CounterValue n={2500} />+ Cr</div>
+                <div className="text-4xl md:text-5xl font-bold tracking-tight"><CounterValue n={280} />+ Cr</div>
                 <div className="mt-1 text-sm text-white/60">Disbursed in loans</div>
               </div>
             </div>
             <div className="rounded-3xl bg-white p-7 shadow-soft border border-brand-dark/5">
-              <Stat value={40} suffix="+" label="Banking partners" icon={Building} />
+              <Stat value={180} suffix="+" label="Banking partners" icon={Building} />
             </div>
             <div className="rounded-3xl bg-white p-7 shadow-soft border border-brand-dark/5">
-              <Stat value={12} suffix=" yrs" label="In business" icon={Award} />
+              <Stat value={6} suffix=" yrs" label="In business" icon={Award} />
             </div>
           </motion.div>
         </div>

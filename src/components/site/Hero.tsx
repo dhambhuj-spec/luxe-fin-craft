@@ -47,7 +47,7 @@ export default function Hero() {
               className="mt-6 text-lg text-brand-dark/70 max-w-xl leading-relaxed"
             >
               From home loans to comprehensive insurance — get expert advisory, the lowest rates,
-              and instant approvals from 40+ banking partners, all in one premium platform.
+              and instant approvals from 180+ banking partners, all in one premium platform.
             </motion.p>
 
             <motion.div
@@ -74,8 +74,8 @@ export default function Hero() {
             >
               {[
                 { icon: ShieldCheck, label: "RBI Registered" },
-                { icon: BadgeCheck, label: "40+ Bank Partners" },
-                { icon: TrendingUp, label: "₹2,500 Cr+ Disbursed" },
+                { icon: BadgeCheck, label: "180+ Bank Partners" },
+                { icon: TrendingUp, label: "₹280 Cr+ Disbursed" },
               ].map((t) => (
                 <div key={t.label} className="flex items-center gap-2 text-sm text-brand-dark/70">
                   <t.icon size={16} className="text-brand-gold" />

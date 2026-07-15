@@ -34,7 +34,7 @@ export default function Footer() {
             <ul className="mt-5 space-y-2.5 text-xs text-white/60">
               <li className="flex items-start gap-2"><MapPin size={13} className="text-brand-gold mt-0.5 flex-shrink-0"/> Office No. 15, Pankaj Complex, New Station Road, Bhuj (M+OG), Taluka Bhuj, District Kachchh, Gujarat</li>
               <li className="flex items-center gap-2"><Mail size={13} className="text-brand-gold"/> <a href="mailto:janakiraghavfin@gmail.com" className="hover:text-white">janakiraghavfin@gmail.com</a></li>
-              <li className="flex items-center gap-2"><Phone size={13} className="text-brand-gold"/> <a href="tel:+919876543210" className="hover:text-white">+91 98765 43210</a></li>
+              <li className="flex items-center gap-2"><Phone size={13} className="text-brand-gold"/> <a href="tel:+919328512413" className="hover:text-white">+91 93285 12413</a></li>
             </ul>
             <div className="mt-5 flex gap-2">
               <a href="https://www.instagram.com/janakiraghavfinserve" target="_blank" rel="noreferrer" aria-label="Instagram" className="h-9 w-9 rounded-full bg-white/5 border border-white/10 grid place-items-center hover:bg-brand-gold hover:text-brand-dark hover:border-brand-gold transition-all">

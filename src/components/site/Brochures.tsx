@@ -107,23 +107,20 @@ export default function Brochures() {
                   </div>
                 </div>
                 <div className="mt-5 flex gap-2">
-                  <a
-                    href={b.pdf_url || "#contact"}
-                    target={b.pdf_url ? "_blank" : undefined}
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: b.pdf_url, mode: "view" })}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-dark text-white text-xs font-semibold py-2.5 hover:bg-brand-dark/90"
                   >
                     <Eye size={13} /> View Brochure
-                  </a>
-                  <a
-                    href={b.pdf_url || "#contact"}
-                    download={!!b.pdf_url}
-                    target={b.pdf_url ? "_blank" : undefined}
-                    rel="noreferrer"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: b.pdf_url, mode: "download" })}
                     className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gold/15 text-brand-dark text-xs font-semibold px-3 py-2.5 hover:bg-brand-gold/30"
                   >
                     <Download size={13} /> PDF
-                  </a>
+                  </button>
                 </div>
               </div>
             </motion.div>

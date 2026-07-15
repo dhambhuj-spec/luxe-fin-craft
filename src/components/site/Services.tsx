@@ -27,7 +27,7 @@ export default function Services() {
             </h2>
           </div>
           <p className="text-brand-dark/60 max-w-md">
-            Compare offers from 40+ lenders and 15+ insurance providers — handpicked, negotiated,
+            Compare offers from 180+ lenders and 15+ insurance providers — handpicked, negotiated,
             and delivered through a single advisor.
           </p>
         </div>

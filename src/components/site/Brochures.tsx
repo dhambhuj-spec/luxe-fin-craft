@@ -142,5 +142,78 @@ export default function Brochures() {
     </section>
   );
 
-  // (interior render helper — reserved for future use)
+}
+
+function InquiryModal({
+  data,
+  onClose,
+}: {
+  data: { id: string; name: string; builder: string; pdf_url: string | null; mode: "view" | "download" };
+  onClose: () => void;
+}) {
+  const [form, setForm] = useState({ name: "", phone: "", email: "" });
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
+      toast.error("Please fill in your name, phone and email.");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.from("leads").insert({
+      name: form.name.trim().slice(0, 120),
+      phone: form.phone.trim().slice(0, 30),
+      email: form.email.trim().slice(0, 254),
+      product: `Brochure — ${data.name}`,
+      source: "brochure",
+      message: `Requested brochure "${data.name}" by ${data.builder}. Action: ${data.mode === "download" ? "Download PDF" : "View brochure"}.`.slice(0, 2000),
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error("Could not submit. Please try again.");
+      return;
+    }
+    toast.success("Thanks! Opening the brochure…");
+    if (data.pdf_url) {
+      window.open(data.pdf_url, "_blank", "noopener,noreferrer");
+    } else {
+      toast.info("Our advisor will send the brochure shortly.");
+    }
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-brand-dark/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="gradient-dark text-white p-6 relative">
+          <button aria-label="Close" onClick={onClose} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/10 grid place-items-center hover:bg-white/20">
+            <X size={16} />
+          </button>
+          <div className="text-xs uppercase tracking-[0.18em] text-brand-gold">Brochure request</div>
+          <h3 className="mt-1.5 text-xl font-bold leading-tight">{data.name}</h3>
+          <div className="text-xs text-white/60 mt-1">{data.builder}</div>
+        </div>
+        <form onSubmit={submit} className="p-6 space-y-4">
+          <p className="text-sm text-brand-dark/60">Share your details to instantly access the brochure. An advisor will follow up with best-fit loan options.</p>
+          <div>
+            <label className="text-xs font-semibold text-brand-dark/70">Full name</label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-xl border border-brand-dark/10 px-4 py-2.5 text-sm outline-none focus:border-brand-gold" placeholder="Rahul Sharma" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-brand-dark/70">Phone number</label>
+            <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1 w-full rounded-xl border border-brand-dark/10 px-4 py-2.5 text-sm outline-none focus:border-brand-gold" placeholder="+91 98XXX XXXXX" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-brand-dark/70">Email</label>
+            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1 w-full rounded-xl border border-brand-dark/10 px-4 py-2.5 text-sm outline-none focus:border-brand-gold" placeholder="you@email.com" />
+          </div>
+          <button type="submit" disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-dark text-white font-semibold py-3 text-sm hover:bg-brand-dark/90 disabled:opacity-60">
+            {submitting ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : <>{data.mode === "download" ? <><Download size={14} /> Get PDF</> : <><Eye size={14} /> View Brochure</>}</>}
+          </button>
+          <p className="text-[10px] text-brand-dark/40 text-center">By submitting, you agree to be contacted by Janaki Raghav Finserve.</p>
+        </form>
+      </div>
+    </div>
+  );
 }

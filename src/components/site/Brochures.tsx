@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Search, Download, Eye, MapPin, Building2, Filter } from "lucide-react";
+import { Search, Download, Eye, MapPin, Building2, Filter, X, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const hues = [
   "from-amber-100 to-orange-200",
@@ -17,6 +18,7 @@ const filters = ["All", "Residential", "Commercial", "Luxury"];
 export default function Brochures() {
   const [f, setF] = useState("All");
   const [q, setQ] = useState("");
+  const [inquiry, setInquiry] = useState<null | { id: string; name: string; builder: string; pdf_url: string | null; mode: "view" | "download" }>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["public-brochures"],
@@ -134,6 +136,14 @@ export default function Brochures() {
           <div className="text-center py-16 text-brand-dark/50 text-sm">Loading projects…</div>
         )}
       </div>
+      {inquiry && (
+        <InquiryModal
+          data={inquiry}
+          onClose={() => setInquiry(null)}
+        />
+      )}
     </section>
   );
+
+  // (interior render helper — reserved for future use)
 }

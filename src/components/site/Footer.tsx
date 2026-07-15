@@ -1,4 +1,4 @@
-import { Instagram, Send, Mail, MapPin, Phone } from "lucide-react";
+import { Instagram, Mail, MapPin, Phone } from "lucide-react";
 import logo from "@/assets/janaki-raghav-logo.png.asset.json";
 
 export default function Footer() {

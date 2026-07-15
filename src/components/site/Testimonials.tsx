@@ -18,7 +18,7 @@ export default function Testimonials() {
         <div className="text-center max-w-2xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 rounded-full bg-brand-gold/10 px-3 py-1 text-xs font-semibold text-brand-dark uppercase tracking-wider">Testimonials</div>
           <h2 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-brand-dark">
-            Loved by <span className="text-gradient-gold">18,000+</span> happy clients.
+            What our <span className="text-gradient-gold">clients</span> say.
           </h2>
         </div>
 

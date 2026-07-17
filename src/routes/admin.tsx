@@ -958,7 +958,7 @@ function SliderInputRow({ label, value, min, max, step, unit, decimals = 0, onCh
           className="absolute inset-0 w-full opacity-0 cursor-pointer"/>
         <div className="absolute top-1/2 -translate-y-1/2 -ml-2.5 h-5 w-5 rounded-full bg-white border-2 border-brand-gold shadow pointer-events-none" style={{ left: `${pct}%` }}/>
       </div>
-      <div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>{prefix}</span><span>{suffix}</span></div>
+      <div className="mt-1 flex justify-between text-[10px] text-slate-400"></div>
     </div>
   );
 }

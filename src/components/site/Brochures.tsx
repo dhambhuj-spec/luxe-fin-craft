@@ -38,6 +38,13 @@ export default function Brochures() {
     d.name.toLowerCase().includes(q.toLowerCase())
   );
 
+  const storageUrl = (path: string | null) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    const { data } = supabase.storage.from("brochures").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   return (
     <section id="brochures" className="py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -78,7 +85,7 @@ export default function Brochures() {
             >
               <div className={`relative h-48 bg-gradient-to-br ${hues[i % hues.length]} overflow-hidden`}>
                 {b.image_url ? (
-                  <img src={b.image_url} alt={b.name} className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={storageUrl(b.image_url)} alt={b.name} className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
                   <>
                     <div className="absolute inset-0 grid-bg opacity-30" />
@@ -109,14 +116,14 @@ export default function Brochures() {
                 <div className="mt-5 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: b.pdf_url, mode: "view" })}
+                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: storageUrl(b.pdf_url), mode: "view" })}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-dark text-white text-xs font-semibold py-2.5 hover:bg-brand-dark/90"
                   >
                     <Eye size={13} /> View Brochure
                   </button>
                   <button
                     type="button"
-                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: b.pdf_url, mode: "download" })}
+                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: storageUrl(b.pdf_url), mode: "download" })}
                     className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gold/15 text-brand-dark text-xs font-semibold px-3 py-2.5 hover:bg-brand-gold/30"
                   >
                     <Download size={13} /> PDF

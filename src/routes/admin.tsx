@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
@@ -177,7 +177,7 @@ function Admin() {
             <RatesView rates={rates} setRates={setRates} />
           )}
           {view === "leads" && <LeadsView />}
-          {view === "analytics" && <AnalyticsView />}
+          {view === "analytics" && <AnalyticsView brochures={brochures} leadSummaries={leadSummaries} />}
           {view === "settings" && <SettingsView />}
 
           {(view === "dashboard" || view === "brochures") && (
@@ -296,7 +296,7 @@ function Admin() {
                 <tbody>
                   {dashboardLoading && <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">Loading brochures…</td></tr>}
                   {!dashboardLoading && brochures.map(b => (
-                    <tr key={b.name} className="border-t border-slate-100 hover:bg-slate-50/50">
+                    <tr key={b.id} className="border-t border-slate-100 hover:bg-slate-50/50">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 grid place-items-center">
@@ -454,13 +454,13 @@ function BrochureModal({ initial, onClose, onSave }: { initial: Brochure | null;
             <ASelect label="Project type" opts={["Residential", "Commercial", "Luxury", "Plotted", "Villas"]} value={form.project_type} onChange={(v) => set("project_type", v)} />
           </div>
           <div className="grid sm:grid-cols-3 gap-4">
-            <AField label="Starting price" placeholder="₹1.8 Cr" value={form.price} onChange={(v) => set("price", v)} />
-            <AField label="Configurations" placeholder="2, 3, 4 BHK" value={form.configs} onChange={(v) => set("configs", v)} />
-            <AField label="Possession" placeholder="Dec 2026" value={form.possession} onChange={(v) => set("possession", v)} />
+            <AField label="Starting price" placeholder="₹1.8 Cr" value={form.price ?? ""} onChange={(v) => set("price", v)} />
+            <AField label="Configurations" placeholder="2, 3, 4 BHK" value={form.configs ?? ""} onChange={(v) => set("configs", v)} />
+            <AField label="Possession" placeholder="Dec 2026" value={form.possession ?? ""} onChange={(v) => set("possession", v)} />
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <AField label="RERA number" placeholder="P52100012345" value={form.rera} onChange={(v) => set("rera", v)} />
-            <ASelect label="Status" opts={["Draft", "Published", "Archived"]} value={form.status} onChange={(v) => set("status", v)} />
+            <AField label="RERA number" placeholder="P52100012345" value={form.rera ?? ""} onChange={(v) => set("rera", v)} />
+            <ASelect label="Status" opts={["Draft", "Published", "Archived"]} value={form.status ?? "Published"} onChange={(v) => set("status", v)} />
           </div>
 
           <UploadField icon={Upload} label="PDF Brochure" hint="Max file size 25 MB · PDF only" accept="application/pdf" file={pdfFile} existing={form.pdf_url} onFile={setPdfFile} />
@@ -675,7 +675,7 @@ function ASelect({ label, opts, value, onChange }: { label: string; opts: string
   );
 }
 function UploadField({ icon: Icon, label, hint, accept, file, existing, onFile }: {
-  icon: React.ComponentType<{ size?: number }>;
+  icon: ComponentType<{ size?: number }>;
   label: string;
   hint: string;
   accept: string;
@@ -1114,29 +1114,44 @@ function SliderInputRow({ label, value, min, max, step, unit, decimals = 0, onCh
 
 /* -------------------- ANALYTICS -------------------- */
 
-function AnalyticsView() {
+function AnalyticsView({ brochures, leadSummaries }: { brochures: Brochure[]; leadSummaries: LeadSummary[] }) {
   const [range, setRange] = useState("30d");
   const ranges = [{ id: "7d", l: "7 days" }, { id: "30d", l: "30 days" }, { id: "90d", l: "90 days" }, { id: "1y", l: "1 year" }];
+  const totalViews = brochures.reduce((sum, b) => sum + (b.views ?? 0), 0);
+  const brochureLeads = leadSummaries.filter((l) => l.source?.toLowerCase() === "brochure").length;
+  const disbursedLeads = leadSummaries.filter((l) => l.stage === "Disbursed");
+  const conversion = leadSummaries.length ? ((disbursedLeads.length / leadSummaries.length) * 100).toFixed(1) : "0.0";
+  const avgTicket = disbursedLeads.length
+    ? Math.round(disbursedLeads.reduce((sum, l) => sum + (l.loan_amount ?? 0), 0) / disbursedLeads.length)
+    : 0;
   const kpis = [
-    { l: "Total visitors", v: "48,219", t: "+22.4%", d: "vs prev period" },
-    { l: "Lead conversion", v: "6.8%", t: "+1.2%", d: "184 of 2,706" },
-    { l: "Brochure downloads", v: "3,142", t: "+11.0%", d: "PDF & ZIP" },
-    { l: "Avg. loan ticket", v: "₹62 L", t: "+8.5%", d: "approved leads" },
+    { l: "Total leads", v: String(leadSummaries.length), d: "All saved inquiries" },
+    { l: "Lead conversion", v: `${conversion}%`, d: `${disbursedLeads.length} disbursed leads` },
+    { l: "Brochure leads", v: String(brochureLeads), d: "Inquiry form submissions" },
+    { l: "Avg. loan ticket", v: avgTicket ? `₹${new Intl.NumberFormat("en-IN", { notation: "compact" }).format(avgTicket)}` : "₹0", d: "Disbursed leads" },
   ];
-  const products = [
-    { name: "Home Loan", v: 92, pct: "38%" },
-    { name: "Business Loan", v: 64, pct: "26%" },
-    { name: "Loan Against Property", v: 38, pct: "16%" },
-    { name: "Car Loan", v: 28, pct: "12%" },
-    { name: "Personal Loan", v: 20, pct: "8%" },
-  ];
-  const sources = [
-    { s: "Website", v: 42, c: "bg-brand-gold" },
-    { s: "Google Ads", v: 24, c: "bg-blue-500" },
-    { s: "WhatsApp", v: 16, c: "bg-emerald-500" },
-    { s: "Referral", v: 11, c: "bg-violet-500" },
-    { s: "Instagram", v: 7, c: "bg-rose-500" },
-  ];
+  const sourceCounts = leadSummaries.reduce<Record<string, number>>((acc, l) => {
+    const key = l.source || "Other";
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  const colors = ["bg-brand-gold", "bg-blue-500", "bg-emerald-500", "bg-violet-500", "bg-rose-500"];
+  const sources = Object.entries(sourceCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([s, count], index) => ({
+    s,
+    v: leadSummaries.length ? Math.round((count / leadSummaries.length) * 100) : 0,
+    c: colors[index] ?? "bg-slate-400",
+  }));
+  const productCounts = leadSummaries.reduce<Record<string, number>>((acc, l) => {
+    const key = l.product || "General Inquiry";
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  const maxProduct = Math.max(1, ...Object.values(productCounts));
+  const products = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({
+    name,
+    v: Math.round((count / maxProduct) * 100),
+    pct: `${leadSummaries.length ? Math.round((count / leadSummaries.length) * 100) : 0}%`,
+  }));
   return (
     <>
       <div className="flex items-start justify-between flex-wrap gap-3">
@@ -1160,7 +1175,7 @@ function AnalyticsView() {
           <div key={k.l} className="rounded-2xl bg-white border border-slate-200 p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-slate-600">{k.l}</span>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5"><ArrowUpRight size={10}/>{k.t}</span>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5"><ArrowUpRight size={10}/>Live</span>
             </div>
             <div className="mt-3 text-3xl font-bold text-brand-dark">{k.v}</div>
             <div className="mt-1 text-xs text-slate-500">{k.d}</div>
@@ -1171,7 +1186,7 @@ function AnalyticsView() {
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5">
           <h3 className="font-bold">Traffic & leads trend</h3>
-          <p className="text-xs text-slate-500 mb-4">Daily visitors vs new leads</p>
+          <p className="text-xs text-slate-500 mb-4">Lead activity and brochure interest</p>
           <div className="h-64">
             <svg viewBox="0 0 600 220" className="w-full h-full">
               <defs>
@@ -1187,14 +1202,14 @@ function AnalyticsView() {
             </svg>
           </div>
           <div className="flex items-center gap-5 text-xs mt-2">
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand-gold"/> Visitors</div>
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand-dark"/> Leads</div>
+            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand-gold"/> Brochure views: {totalViews.toLocaleString("en-IN")}</div>
+            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand-dark"/> Leads: {leadSummaries.length}</div>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <h3 className="font-bold">Traffic sources</h3>
-          <p className="text-xs text-slate-500 mb-4">Share of total visits</p>
+          <p className="text-xs text-slate-500 mb-4">Share of total leads</p>
           <div className="space-y-3">
             {sources.map(s => (
               <div key={s.s}>
@@ -1204,6 +1219,7 @@ function AnalyticsView() {
                 </div>
               </div>
             ))}
+            {sources.length === 0 && <div className="text-sm text-slate-400 py-8 text-center">No source data yet.</div>}
           </div>
         </div>
       </div>
@@ -1221,6 +1237,7 @@ function AnalyticsView() {
               <div className="w-20 text-right text-sm font-semibold">{p.pct}</div>
             </div>
           ))}
+          {products.length === 0 && <div className="text-sm text-slate-400 py-8 text-center">No product data yet.</div>}
         </div>
       </div>
     </>

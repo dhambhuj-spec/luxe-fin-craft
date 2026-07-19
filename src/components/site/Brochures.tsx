@@ -151,13 +151,13 @@ function InquiryModal({
   data: { id: string; name: string; builder: string; pdf_url: string | null; mode: "view" | "download" };
   onClose: () => void;
 }) {
-  const [form, setForm] = useState({ name: "", phone: "", email: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
-      toast.error("Please fill in your name, phone and email.");
+    if (!form.name.trim() || !form.phone.trim() || !form.email.trim() || !form.address.trim()) {
+      toast.error("Please fill in your name, phone, email and address.");
       return;
     }
     setSubmitting(true);
@@ -167,7 +167,7 @@ function InquiryModal({
       email: form.email.trim().slice(0, 254),
       product: `Brochure — ${data.name}`,
       source: "brochure",
-      message: `Requested brochure "${data.name}" by ${data.builder}. Action: ${data.mode === "download" ? "Download PDF" : "View brochure"}.`.slice(0, 2000),
+      message: `Requested brochure "${data.name}" by ${data.builder}. Action: ${data.mode === "download" ? "Download PDF" : "View brochure"}.\nAddress: ${form.address.trim()}`.slice(0, 2000),
     });
     setSubmitting(false);
     if (error) {
@@ -207,6 +207,10 @@ function InquiryModal({
           <div>
             <label className="text-xs font-semibold text-brand-dark/70">Email</label>
             <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1 w-full rounded-xl border border-brand-dark/10 px-4 py-2.5 text-sm outline-none focus:border-brand-gold" placeholder="you@email.com" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-brand-dark/70">Address</label>
+            <textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1 w-full rounded-xl border border-brand-dark/10 px-4 py-2.5 text-sm outline-none focus:border-brand-gold resize-none" placeholder="City, area, pincode" />
           </div>
           <button type="submit" disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-dark text-white font-semibold py-3 text-sm hover:bg-brand-dark/90 disabled:opacity-60">
             {submitting ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : <>{data.mode === "download" ? <><Download size={14} /> Get PDF</> : <><Eye size={14} /> View Brochure</>}</>}

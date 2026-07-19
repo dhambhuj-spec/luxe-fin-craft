@@ -178,7 +178,7 @@ function Admin() {
           )}
           {view === "leads" && <LeadsView />}
           {view === "analytics" && <AnalyticsView brochures={brochures} leadSummaries={leadSummaries} />}
-          {view === "settings" && <SettingsView adminName={adminName} adminEmail={user.email ?? "janakiraghavfin@gmail.com"} />}
+          {view === "settings" && <SettingsView adminName={adminName} adminEmail={user?.email ?? "janakiraghavfin@gmail.com"} />}
 
           {(view === "dashboard" || view === "brochures") && (
             <>

@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import logo from "@/assets/janaki-raghav-logo.png.asset.json";
 import {
@@ -8,57 +10,101 @@ import {
   Plus, Upload, Image as ImgIcon, MoreHorizontal, TrendingUp,
   Eye, Edit3, Trash2, ChevronDown, Building2, X, Percent, Save, Check, Copy,
   Mail, Phone, MessageCircle, Filter, ArrowUpRight, Shield, Globe, Palette, CreditCard, Lock,
+  Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({ component: Admin });
 
-type Brochure = {
-  name: string; builder: string; loc: string; type: string; price: string;
-  configs: string; possession: string; rera: string; date: string; views: number; status: string;
-};
-
-const initialBrochures: Brochure[] = [
-  { name: "Lodha Belmondo", builder: "Lodha Group", loc: "Pune", type: "Residential", price: "₹2.4 Cr", configs: "3, 4 BHK", possession: "Dec 2026", rera: "P52100012345", date: "12 Mar 2025", views: 1248, status: "Published" },
-  { name: "Prestige Falcon City", builder: "Prestige Estates", loc: "Bengaluru", type: "Residential", price: "₹1.8 Cr", configs: "2, 3, 4 BHK", possession: "Jun 2027", rera: "PRM/KA/RERA/22345", date: "08 Mar 2025", views: 982, status: "Published" },
-  { name: "DLF Camellias", builder: "DLF Limited", loc: "Gurugram", type: "Luxury", price: "₹12 Cr", configs: "4, 5 BHK", possession: "Ready to move", rera: "RC/REP/HARERA/445", date: "01 Mar 2025", views: 2104, status: "Published" },
-  { name: "Godrej Reserve", builder: "Godrej Properties", loc: "Mumbai", type: "Residential", price: "₹3.2 Cr", configs: "3 BHK", possession: "Mar 2027", rera: "P51800023456", date: "27 Feb 2025", views: 614, status: "Draft" },
-  { name: "Brigade El Dorado", builder: "Brigade Group", loc: "Bengaluru", type: "Commercial", price: "₹95 L", configs: "1, 2 BHK", possession: "Sep 2026", rera: "PRM/KA/RERA/33456", date: "21 Feb 2025", views: 530, status: "Published" },
-  { name: "Sobha Dream Acres", builder: "Sobha Limited", loc: "Bengaluru", type: "Residential", price: "₹1.1 Cr", configs: "2, 3 BHK", possession: "Dec 2025", rera: "PRM/KA/RERA/44567", date: "15 Feb 2025", views: 745, status: "Archived" },
-];
+type Brochure = Tables<"brochures">;
 
 type Rate = { id: string; name: string; min: number; max: number; processing: string; tenure: string; updated: string };
-
-const initialRates: Rate[] = [
-  { id: "home", name: "Home Loan", min: 8.40, max: 9.75, processing: "0.50%", tenure: "Up to 30 yrs", updated: "12 Mar 2025" },
-  { id: "car", name: "Car Loan", min: 8.75, max: 11.50, processing: "1.00%", tenure: "Up to 7 yrs", updated: "10 Mar 2025" },
-  { id: "business", name: "Business Loan", min: 11.99, max: 18.00, processing: "1.50%", tenure: "Up to 5 yrs", updated: "08 Mar 2025" },
-  { id: "personal", name: "Personal Loan", min: 10.50, max: 16.00, processing: "1.25%", tenure: "Up to 6 yrs", updated: "08 Mar 2025" },
-  { id: "lap", name: "Loan Against Property", min: 9.25, max: 12.50, processing: "0.75%", tenure: "Up to 15 yrs", updated: "05 Mar 2025" },
-  { id: "edu", name: "Education Loan", min: 9.50, max: 13.00, processing: "1.00%", tenure: "Up to 10 yrs", updated: "01 Mar 2025" },
-  { id: "gold", name: "Gold Loan", min: 8.90, max: 14.00, processing: "0.30%", tenure: "Up to 3 yrs", updated: "01 Mar 2025" },
-];
+type LeadSummary = Pick<Tables<"leads">, "id" | "stage" | "source" | "product" | "loan_amount" | "created_at">;
 
 type View = "dashboard" | "brochures" | "rates" | "leads" | "analytics" | "settings";
 
 function Admin() {
+  const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [view, setView] = useState<View>("dashboard");
-  const [brochures, setBrochures] = useState<Brochure[]>(initialBrochures);
-  const [rates, setRates] = useState<Rate[]>(initialRates);
+  const [brochures, setBrochures] = useState<Brochure[]>([]);
+  const [rates, setRates] = useState<Rate[]>([]);
+  const [leadSummaries, setLeadSummaries] = useState<LeadSummary[]>([]);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [editBrochure, setEditBrochure] = useState<Brochure | null>(null);
 
+  const adminName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Admin";
+
+  const formatDate = (value?: string | null) => value
+    ? new Date(value).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    : "—";
+
+  const mapRate = (r: Tables<"interest_rates">): Rate => ({
+    id: r.id,
+    name: r.name,
+    min: Number(r.min_roi),
+    max: Number(r.max_roi),
+    processing: r.processing,
+    tenure: r.tenure,
+    updated: formatDate(r.updated_at),
+  });
+
+  const loadAdminData = async () => {
+    setDashboardLoading(true);
+    const [brochureRes, rateRes, leadRes] = await Promise.all([
+      supabase.from("brochures").select("*").order("created_at", { ascending: false }),
+      supabase.from("interest_rates").select("*").order("sort_order", { ascending: true }),
+      supabase.from("leads").select("id, stage, source, product, loan_amount, created_at").order("created_at", { ascending: false }),
+    ]);
+
+    if (brochureRes.error) toast.error(`Brochures: ${brochureRes.error.message}`);
+    else setBrochures(brochureRes.data ?? []);
+
+    if (rateRes.error) toast.error(`Interest rates: ${rateRes.error.message}`);
+    else setRates((rateRes.data ?? []).map(mapRate));
+
+    if (leadRes.error) toast.error(`Leads: ${leadRes.error.message}`);
+    else setLeadSummaries((leadRes.data ?? []) as LeadSummary[]);
+
+    setDashboardLoading(false);
+  };
+
+  useEffect(() => {
+    if (!authLoading && !user) navigate({ to: "/login", replace: true });
+  }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (user) void loadAdminData();
+  }, [user]);
+
   const handleSaveBrochure = (b: Brochure) => {
-    setBrochures((list) => {
-      const exists = list.find((x) => x.name === b.name);
-      return exists ? list.map((x) => (x.name === b.name ? b : x)) : [b, ...list];
-    });
+    setBrochures((list) => list.some((x) => x.id === b.id) ? list.map((x) => (x.id === b.id ? b : x)) : [b, ...list]);
     setShowModal(false);
     setEditBrochure(null);
   };
 
-  const handleDeleteBrochure = (name: string) => {
-    setBrochures((list) => list.filter((b) => b.name !== name));
+  const handleDeleteBrochure = async (id: string) => {
+    if (!confirm("Delete this brochure permanently?")) return;
+    const previous = brochures;
+    setBrochures((list) => list.filter((b) => b.id !== id));
+    const { error } = await supabase.from("brochures").delete().eq("id", id);
+    if (error) {
+      setBrochures(previous);
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Brochure deleted");
   };
+
+  const activeLeads = leadSummaries.filter((l) => l.stage !== "Disbursed" && l.stage !== "Rejected").length;
+  const brochureLeads = leadSummaries.filter((l) => l.source?.toLowerCase() === "brochure").length;
+  const todayKey = new Date().toDateString();
+  const leadsToday = leadSummaries.filter((l) => new Date(l.created_at).toDateString() === todayKey).length;
+  const totalViews = brochures.reduce((sum, b) => sum + (b.views ?? 0), 0);
+
+  if (authLoading || (!user && !authLoading)) {
+    return <AdminLoading label="Checking admin access…" />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-brand-dark flex">
@@ -98,10 +144,10 @@ function Admin() {
           <div className="flex items-center gap-3 px-2">
             <div className="h-9 w-9 rounded-full gradient-gold grid place-items-center text-brand-dark font-bold text-sm">RS</div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate">Rohan Sharma</div>
-              <div className="text-[11px] text-white/50">Super Admin</div>
+              <div className="text-sm font-semibold truncate">{adminName}</div>
+              <div className="text-[11px] text-white/50">Admin</div>
             </div>
-            <button className="text-white/40 hover:text-white"><LogOut size={14} /></button>
+            <button onClick={() => signOut()} className="text-white/40 hover:text-white"><LogOut size={14} /></button>
           </div>
         </div>
       </aside>
@@ -139,22 +185,22 @@ function Admin() {
           {/* Page title */}
           <div>
             <div className="text-xs text-slate-500">Dashboard</div>
-            <h1 className="text-2xl font-bold mt-0.5">Good morning, Rohan 👋</h1>
-            <p className="text-sm text-slate-500 mt-1">Here's what's happening with your portfolio today.</p>
+            <h1 className="text-2xl font-bold mt-0.5">Good morning, {adminName} 👋</h1>
+            <p className="text-sm text-slate-500 mt-1">Live backend data for brochures, leads and interest rates.</p>
           </div>
 
           {/* KPI cards */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { l: "Total Brochures", v: "26", d: "+4 this month", trend: "+18%", grad: "from-amber-50 to-amber-100" },
-              { l: "Active Leads", v: "184", d: "12 new today", trend: "+24%", grad: "from-blue-50 to-blue-100" },
-              { l: "Brochure Views", v: "12,408", d: "Last 30 days", trend: "+8%", grad: "from-emerald-50 to-emerald-100" },
-              { l: "Downloads", v: "3,142", d: "PDF downloads", trend: "+11%", grad: "from-rose-50 to-rose-100" },
+              { l: "Total Brochures", v: String(brochures.length), d: "Saved in backend", grad: "from-amber-50 to-amber-100" },
+              { l: "Active Leads", v: String(activeLeads), d: `${leadsToday} new today`, grad: "from-blue-50 to-blue-100" },
+              { l: "Brochure Views", v: totalViews.toLocaleString("en-IN"), d: "Total recorded views", grad: "from-emerald-50 to-emerald-100" },
+              { l: "Brochure Leads", v: String(brochureLeads), d: "Inquiry form submissions", grad: "from-rose-50 to-rose-100" },
             ].map(k => (
               <div key={k.l} className={`rounded-2xl bg-gradient-to-br ${k.grad} border border-slate-200/60 p-5`}>
                 <div className="flex items-start justify-between">
                   <span className="text-xs font-medium text-slate-600">{k.l}</span>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-white/70 px-1.5 py-0.5 rounded">{k.trend}</span>
+                  {dashboardLoading && <Loader2 size={12} className="animate-spin text-slate-400" />}
                 </div>
                 <div className="mt-3 text-3xl font-bold">{k.v}</div>
                 <div className="mt-1 text-xs text-slate-500">{k.d}</div>
@@ -170,9 +216,9 @@ function Admin() {
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className="font-bold">Brochure performance</h3>
-                  <p className="text-xs text-slate-500">Views & downloads, last 7 days</p>
+                  <p className="text-xs text-slate-500">Live totals from saved brochure records</p>
                 </div>
-                <button className="text-xs flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 hover:bg-slate-50">This week <ChevronDown size={12} /></button>
+                <button onClick={loadAdminData} className="text-xs flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 hover:bg-slate-50">Refresh</button>
               </div>
               <div className="h-56">
                 <svg viewBox="0 0 600 200" className="w-full h-full">
@@ -195,8 +241,8 @@ function Admin() {
                 </svg>
               </div>
               <div className="flex items-center gap-5 mt-4 text-xs">
-                <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand-gold" /> Views <span className="text-slate-500">12,408</span></div>
-                <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand-dark" /> Downloads <span className="text-slate-500">3,142</span></div>
+                <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand-gold" /> Views <span className="text-slate-500">{totalViews.toLocaleString("en-IN")}</span></div>
+                <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-brand-dark" /> Brochure leads <span className="text-slate-500">{brochureLeads}</span></div>
               </div>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-5">
@@ -208,7 +254,7 @@ function Admin() {
                     <div className="h-9 w-9 rounded-lg bg-brand-gold/15 grid place-items-center text-brand-dark text-xs font-bold">{i+1}</div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold truncate">{b.name}</div>
-                      <div className="text-[11px] text-slate-500">{b.loc}</div>
+                      <div className="text-[11px] text-slate-500">{b.location}</div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-bold">{b.views.toLocaleString()}</div>
@@ -248,7 +294,8 @@ function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {brochures.map(b => (
+                  {dashboardLoading && <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">Loading brochures…</td></tr>}
+                  {!dashboardLoading && brochures.map(b => (
                     <tr key={b.name} className="border-t border-slate-100 hover:bg-slate-50/50">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
@@ -257,7 +304,7 @@ function Admin() {
                           </div>
                           <div>
                             <div className="font-semibold">{b.name}</div>
-                            <div className="text-xs text-slate-500">{b.loc} · {b.type}</div>
+                            <div className="text-xs text-slate-500">{b.location} · {b.project_type}</div>
                           </div>
                         </div>
                       </td>
@@ -279,23 +326,22 @@ function Admin() {
                         <div className="flex items-center justify-end gap-1">
                           <button title="View" className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Eye size={14}/></button>
                           <button title="Edit" onClick={() => { setEditBrochure(b); setShowModal(true); }} className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Edit3 size={14}/></button>
-                          <button title="Delete" onClick={() => handleDeleteBrochure(b.name)} className="h-8 w-8 rounded-lg hover:bg-rose-50 grid place-items-center text-rose-500"><Trash2 size={14}/></button>
+                          <button title="Delete" onClick={() => handleDeleteBrochure(b.id)} className="h-8 w-8 rounded-lg hover:bg-rose-50 grid place-items-center text-rose-500"><Trash2 size={14}/></button>
                           <button className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><MoreHorizontal size={14}/></button>
                         </div>
                       </td>
                     </tr>
                   ))}
+                  {!dashboardLoading && brochures.length === 0 && (
+                    <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">No brochures yet. Add your first builder brochure.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
             <div className="flex items-center justify-between p-4 border-t border-slate-100 text-xs text-slate-500">
               <div>Showing 1–{brochures.length} of {brochures.length} brochures</div>
               <div className="flex gap-1">
-                <button className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">Prev</button>
-                <button className="px-3 py-1.5 rounded-lg bg-brand-dark text-white">1</button>
-                <button className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">2</button>
-                <button className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">3</button>
-                <button className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">Next</button>
+                <button className="px-3 py-1.5 rounded-lg bg-brand-dark text-white">Live</button>
               </div>
             </div>
           </div>
@@ -316,16 +362,77 @@ function Admin() {
   );
 }
 
+function AdminLoading({ label }: { label: string }) {
+  return (
+    <div className="min-h-screen bg-slate-50 text-brand-dark grid place-items-center">
+      <div className="inline-flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" /> {label}</div>
+    </div>
+  );
+}
+
 function BrochureModal({ initial, onClose, onSave }: { initial: Brochure | null; onClose: () => void; onSave: (b: Brochure) => void }) {
   const [form, setForm] = useState<Brochure>(
     initial ?? {
-      name: "", builder: "", loc: "", type: "Residential", price: "",
-      configs: "", possession: "", rera: "",
-      date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-      views: 0, status: "Draft",
+      id: "", name: "", builder: "", location: "", project_type: "Residential", price: "",
+      configs: "", possession: "", rera: "", pdf_url: null, image_url: null,
+      views: 0, status: "Published", created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     }
   );
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
   const set = <K extends keyof Brochure>(k: K, v: Brochure[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const uploadFile = async (file: File, folder: "pdf" | "images") => {
+    const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").replace(/-+/g, "-");
+    const path = `${folder}/${Date.now()}-${safeName}`;
+    const { error } = await supabase.storage.from("brochures").upload(path, file, {
+      cacheControl: "3600",
+      contentType: file.type,
+      upsert: false,
+    });
+    if (error) throw error;
+    return path;
+  };
+
+  const save = async () => {
+    if (!form.name.trim() || !form.builder.trim() || !form.location.trim()) {
+      toast.error("Project name, builder and location are required.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const pdfPath = pdfFile ? await uploadFile(pdfFile, "pdf") : form.pdf_url;
+      const imagePath = imageFile ? await uploadFile(imageFile, "images") : form.image_url;
+      const payload = {
+        name: form.name.trim(),
+        builder: form.builder.trim(),
+        location: form.location.trim(),
+        project_type: form.project_type || "Residential",
+        price: form.price?.trim() || null,
+        configs: form.configs?.trim() || null,
+        possession: form.possession?.trim() || null,
+        rera: form.rera?.trim() || null,
+        pdf_url: pdfPath || null,
+        image_url: imagePath || null,
+        status: form.status || "Published",
+        views: form.views ?? 0,
+        updated_at: new Date().toISOString(),
+      };
+
+      const query = initial?.id
+        ? supabase.from("brochures").update(payload).eq("id", initial.id).select("*").single()
+        : supabase.from("brochures").insert(payload).select("*").single();
+      const { data, error } = await query;
+      if (error) throw error;
+      toast.success(initial ? "Brochure updated" : "Brochure published");
+      onSave(data as Brochure);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save brochure");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-brand-dark/40 backdrop-blur-sm grid place-items-center p-4 overflow-y-auto" onClick={onClose}>
@@ -339,12 +446,12 @@ function BrochureModal({ initial, onClose, onSave }: { initial: Brochure | null;
         </div>
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
           <div className="grid sm:grid-cols-2 gap-4">
-            <AField label="Project name" placeholder="Lodha Belmondo" value={form.name} onChange={(v) => set("name", v)} />
-            <AField label="Builder / Developer" placeholder="Lodha Group" value={form.builder} onChange={(v) => set("builder", v)} />
+            <AField label="Project name" placeholder="Project name" value={form.name} onChange={(v) => set("name", v)} />
+            <AField label="Builder / Developer" placeholder="Builder name" value={form.builder} onChange={(v) => set("builder", v)} />
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <AField label="Location" placeholder="Pune, MH" value={form.loc} onChange={(v) => set("loc", v)} />
-            <ASelect label="Project type" opts={["Residential", "Commercial", "Luxury", "Plotted", "Villas"]} value={form.type} onChange={(v) => set("type", v)} />
+            <AField label="Location" placeholder="City, area" value={form.location} onChange={(v) => set("location", v)} />
+            <ASelect label="Project type" opts={["Residential", "Commercial", "Luxury", "Plotted", "Villas"]} value={form.project_type} onChange={(v) => set("project_type", v)} />
           </div>
           <div className="grid sm:grid-cols-3 gap-4">
             <AField label="Starting price" placeholder="₹1.8 Cr" value={form.price} onChange={(v) => set("price", v)} />
@@ -356,13 +463,13 @@ function BrochureModal({ initial, onClose, onSave }: { initial: Brochure | null;
             <ASelect label="Status" opts={["Draft", "Published", "Archived"]} value={form.status} onChange={(v) => set("status", v)} />
           </div>
 
-          <UploadField icon={Upload} label="PDF Brochure" hint="Max file size 25 MB · PDF only" />
-          <UploadField icon={ImgIcon} label="Thumbnail image" hint="JPG/PNG · 1200×800 recommended" />
+          <UploadField icon={Upload} label="PDF Brochure" hint="Max file size 25 MB · PDF only" accept="application/pdf" file={pdfFile} existing={form.pdf_url} onFile={setPdfFile} />
+          <UploadField icon={ImgIcon} label="Thumbnail image" hint="JPG/PNG · 1200×800 recommended" accept="image/*" file={imageFile} existing={form.image_url} onFile={setImageFile} />
 
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Cancel</button>
-            <button onClick={() => form.name && onSave(form)} className="rounded-xl bg-brand-dark text-white px-4 py-2 text-sm font-semibold hover:bg-brand-dark/90 inline-flex items-center gap-2">
-              <Save size={14}/> {initial ? "Save changes" : "Publish brochure"}
+            <button disabled={saving} onClick={save} className="rounded-xl bg-brand-dark text-white px-4 py-2 text-sm font-semibold hover:bg-brand-dark/90 inline-flex items-center gap-2 disabled:opacity-60">
+              {saving ? <Loader2 size={14} className="animate-spin"/> : <Save size={14}/>} {saving ? "Saving…" : initial ? "Save changes" : "Publish brochure"}
             </button>
           </div>
         </div>
@@ -374,25 +481,55 @@ function BrochureModal({ initial, onClose, onSave }: { initial: Brochure | null;
 function RatesView({ rates, setRates }: { rates: Rate[]; setRates: (r: Rate[]) => void }) {
   const [draft, setDraft] = useState<Rate[]>(rates);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [savingAll, setSavingAll] = useState(false);
+
+  useEffect(() => setDraft(rates), [rates]);
 
   const update = (id: string, patch: Partial<Rate>) => {
     setDraft((d) => d.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   };
 
-  const saveRow = (id: string) => {
-    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const saveRow = async (id: string) => {
+    const row = draft.find((r) => r.id === id);
+    if (!row) return;
+    const timestamp = new Date().toISOString();
+    const { error } = await supabase.from("interest_rates").update({
+      min_roi: row.min,
+      max_roi: row.max,
+      processing: row.processing,
+      tenure: row.tenure,
+      updated_at: timestamp,
+    }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    const today = new Date(timestamp).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     const next = draft.map((r) => (r.id === id ? { ...r, updated: today } : r));
     setDraft(next);
     setRates(next);
     setSavedId(id);
+    toast.success("Interest rate saved");
     setTimeout(() => setSavedId(null), 1500);
   };
 
-  const saveAll = () => {
-    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const saveAll = async () => {
+    setSavingAll(true);
+    const timestamp = new Date().toISOString();
+    const { error } = await supabase.from("interest_rates").upsert(draft.map((r, index) => ({
+      id: r.id,
+      name: r.name,
+      min_roi: r.min,
+      max_roi: r.max,
+      processing: r.processing,
+      tenure: r.tenure,
+      sort_order: index,
+      updated_at: timestamp,
+    })));
+    setSavingAll(false);
+    if (error) { toast.error(error.message); return; }
+    const today = new Date(timestamp).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     const next = draft.map((r) => ({ ...r, updated: today }));
     setDraft(next);
     setRates(next);
+    toast.success("All interest rates saved");
   };
 
   return (
@@ -405,17 +542,17 @@ function RatesView({ rates, setRates }: { rates: Rate[]; setRates: (r: Rate[]) =
           </h1>
           <p className="text-sm text-slate-500 mt-1">Update rate of interest, processing fees and tenure for every loan product.</p>
         </div>
-        <button onClick={saveAll} className="inline-flex items-center gap-2 rounded-xl bg-brand-dark text-white text-sm font-semibold px-4 py-2 hover:bg-brand-dark/90">
-          <Save size={14} /> Save all changes
+        <button disabled={savingAll} onClick={saveAll} className="inline-flex items-center gap-2 rounded-xl bg-brand-dark text-white text-sm font-semibold px-4 py-2 hover:bg-brand-dark/90 disabled:opacity-60">
+          {savingAll ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} {savingAll ? "Saving…" : "Save all changes"}
         </button>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">
-        {[
+          {draft.length > 0 && [
           { l: "Loan products", v: String(draft.length) },
           { l: "Lowest ROI", v: `${Math.min(...draft.map((r) => r.min)).toFixed(2)}%` },
           { l: "Highest ROI", v: `${Math.max(...draft.map((r) => r.max)).toFixed(2)}%` },
-        ].map((k) => (
+          ].map((k) => (
           <div key={k.l} className="rounded-2xl bg-white border border-slate-200 p-5">
             <div className="text-xs font-medium text-slate-600">{k.l}</div>
             <div className="mt-2 text-3xl font-bold text-brand-dark">{k.v}</div>
@@ -477,6 +614,9 @@ function RatesView({ rates, setRates }: { rates: Rate[]; setRates: (r: Rate[]) =
                   </td>
                 </tr>
               ))}
+              {draft.length === 0 && (
+                <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-400 text-sm">No interest rates found.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -534,15 +674,24 @@ function ASelect({ label, opts, value, onChange }: { label: string; opts: string
     </div>
   );
 }
-function UploadField({ icon: Icon, label, hint }: any) {
+function UploadField({ icon: Icon, label, hint, accept, file, existing, onFile }: {
+  icon: React.ComponentType<{ size?: number }>;
+  label: string;
+  hint: string;
+  accept: string;
+  file: File | null;
+  existing?: string | null;
+  onFile: (file: File | null) => void;
+}) {
   return (
     <div>
       <label className="block text-xs font-semibold text-slate-700 mb-1.5">{label}</label>
-      <div className="rounded-xl border-2 border-dashed border-slate-200 p-5 text-center hover:border-brand-gold/60 hover:bg-brand-gold/5 transition-colors cursor-pointer">
+      <label className="block rounded-xl border-2 border-dashed border-slate-200 p-5 text-center hover:border-brand-gold/60 hover:bg-brand-gold/5 transition-colors cursor-pointer">
+        <input type="file" accept={accept} className="sr-only" onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
         <div className="mx-auto h-10 w-10 rounded-xl bg-brand-gold/15 text-brand-dark grid place-items-center mb-2"><Icon size={18}/></div>
-        <div className="text-sm font-semibold">Click to upload <span className="font-normal text-slate-500">or drag and drop</span></div>
+        <div className="text-sm font-semibold">{file ? file.name : existing ? "File already attached" : "Click to upload"} <span className="font-normal text-slate-500">{file ? "" : "or drag and drop"}</span></div>
         <div className="text-xs text-slate-500 mt-0.5">{hint}</div>
-      </div>
+      </label>
     </div>
   );
 }

@@ -178,7 +178,7 @@ function Admin() {
           )}
           {view === "leads" && <LeadsView />}
           {view === "analytics" && <AnalyticsView brochures={brochures} leadSummaries={leadSummaries} />}
-          {view === "settings" && <SettingsView />}
+          {view === "settings" && <SettingsView adminName={adminName} adminEmail={user.email ?? "janakiraghavfin@gmail.com"} />}
 
           {(view === "dashboard" || view === "brochures") && (
             <>
@@ -1246,7 +1246,7 @@ function AnalyticsView({ brochures, leadSummaries }: { brochures: Brochure[]; le
 
 /* -------------------- SETTINGS -------------------- */
 
-function SettingsView() {
+function SettingsView({ adminName, adminEmail }: { adminName: string; adminEmail: string }) {
   const [tab, setTab] = useState<"profile" | "company" | "notifications" | "appearance" | "billing" | "security">("profile");
   const tabs = [
     { id: "profile" as const, l: "Profile", icon: Users },
@@ -1283,7 +1283,7 @@ function SettingsView() {
             <>
               <SectionHead title="Profile" subtitle="Update your personal information." />
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-2xl gradient-gold grid place-items-center text-brand-dark font-bold text-xl">RS</div>
+                <div className="h-16 w-16 rounded-2xl gradient-gold grid place-items-center text-brand-dark font-bold text-xl">JR</div>
                 <div>
                   <button className="rounded-xl bg-brand-dark text-white text-xs font-semibold px-3 py-1.5 mr-2">Upload new</button>
                   <button className="rounded-xl border border-slate-200 text-xs font-semibold px-3 py-1.5">Remove</button>
@@ -1291,10 +1291,10 @@ function SettingsView() {
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                <AField label="Full name" value="Rohan Sharma" />
-                <AField label="Designation" value="Super Admin" />
-                <AField label="Email" value="rohan@aurum.finance" />
-                <AField label="Phone" value="+91 98201 12345" />
+                <AField label="Full name" value={adminName} />
+                <AField label="Designation" value="Admin" />
+                <AField label="Email" value={adminEmail} />
+                <AField label="Phone" value="+91 93285 12413" />
               </div>
               <SaveRow />
             </>
@@ -1307,10 +1307,10 @@ function SettingsView() {
                 <AField label="Brand name" value="Janaki Raghav" />
                 <AField label="GSTIN" value="27ABCDE1234F1Z5" />
                 <AField label="PAN" value="ABCDE1234F" />
-                <AField label="Support email" value="hello@aurum.finance" />
-                <AField label="Support phone" value="+91 1800 123 4567" />
+                <AField label="Support email" value="janakiraghavfin@gmail.com" />
+                <AField label="Support phone" value="+91 93285 12413" />
               </div>
-              <AField label="Registered address" value="Level 18, One BKC, Bandra Kurla Complex, Mumbai 400051" />
+              <AField label="Registered address" value="Bhuj, Kachchh, Gujarat" />
               <SaveRow />
             </>
           )}
@@ -1347,26 +1347,8 @@ function SettingsView() {
           )}
           {tab === "billing" && (
             <>
-              <SectionHead title="Billing" subtitle="Your subscription and payment method." />
-              <div className="rounded-2xl bg-gradient-to-br from-brand-dark to-brand-dark/90 text-white p-5 flex items-center justify-between">
-                <div>
-                  <div className="text-xs text-white/60 uppercase tracking-wider">Current plan</div>
-                  <div className="text-2xl font-bold text-gradient-gold mt-1">Janaki Raghav Pro</div>
-                  <div className="text-xs text-white/70 mt-1">Renews on 12 Mar 2027 · ₹49,999/year</div>
-                </div>
-                <button className="rounded-xl bg-brand-gold text-brand-dark text-sm font-semibold px-4 py-2">Manage plan</button>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold mb-3">Payment method</h4>
-                <div className="rounded-xl border border-slate-200 p-4 flex items-center gap-4">
-                  <div className="h-10 w-14 rounded-lg bg-gradient-to-br from-slate-800 to-slate-600 grid place-items-center text-white text-[10px] font-bold">VISA</div>
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold">•••• •••• •••• 4242</div>
-                    <div className="text-xs text-slate-500">Expires 09/29 · Rohan Sharma</div>
-                  </div>
-                  <button className="text-xs font-semibold text-brand-dark hover:underline">Replace</button>
-                </div>
-              </div>
+              <SectionHead title="Billing" subtitle="No billing records are connected yet." />
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">Billing details will appear here when a real billing integration is connected.</div>
             </>
           )}
           {tab === "security" && (

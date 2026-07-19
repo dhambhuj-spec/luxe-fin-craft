@@ -74,7 +74,7 @@ export default function Contact() {
               <div className="relative space-y-5">
                 <h3 className="font-bold text-xl">Reach us</h3>
                 {[
-                  { icon: Phone, l: "Phone", v: "+91 98765 43210" },
+                  { icon: Phone, l: "Phone", v: "+91 93285 12413" },
                   { icon: Mail, l: "Email", v: "janakiraghavfin@gmail.com" },
                   { icon: MapPin, l: "Office", v: "Office No. 15, Pankaj Complex, New Station Road, Bhuj (M+OG), Taluka Bhuj, District Kachchh, Gujarat" },
                   { icon: Clock, l: "Hours", v: "Mon–Sat · 10:00 AM – 8:00 PM" },

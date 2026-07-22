@@ -16,9 +16,14 @@ export default function Contact() {
       toast.error("Please fill in your name, phone, and email.");
       return;
     }
+    const digits = form.phone.replace(/\D/g, "");
+    if (digits.length !== 10) {
+      toast.error("Please enter a valid 10-digit phone number.");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.from("leads").insert({
-      name: form.name, email: form.email, phone: form.phone,
+      name: form.name, email: form.email, phone: digits,
       product: form.product, amount: form.amount || null,
       message: form.message || null, source: "Website", stage: "New",
     });
@@ -44,7 +49,7 @@ export default function Contact() {
           <form onSubmit={submit} className="lg:col-span-3 glass rounded-3xl p-7 md:p-10 shadow-soft border border-brand-dark/5 space-y-5">
             <div className="grid sm:grid-cols-2 gap-5">
               <Field label="Full name" placeholder="Aarav Mehta" value={form.name} onChange={(v) => set("name", v)} />
-              <Field label="Phone number" placeholder="+91 98XXX XXXXX" value={form.phone} onChange={(v) => set("phone", v)} />
+              <Field label="Phone number" placeholder="10-digit mobile" type="tel" maxLength={10} value={form.phone} onChange={(v) => set("phone", v.replace(/\D/g, "").slice(0, 10))} />
             </div>
             <div className="grid sm:grid-cols-2 gap-5">
               <Field label="Email" placeholder="you@email.com" type="email" value={form.email} onChange={(v) => set("email", v)} />
@@ -110,11 +115,11 @@ export default function Contact() {
   );
 }
 
-function Field({ label, placeholder, type = "text", value, onChange }: { label: string; placeholder?: string; type?: string; value?: string; onChange?: (v: string) => void }) {
+function Field({ label, placeholder, type = "text", value, onChange, maxLength }: { label: string; placeholder?: string; type?: string; value?: string; onChange?: (v: string) => void; maxLength?: number }) {
   return (
     <div>
       <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">{label}</label>
-      <input type={type} placeholder={placeholder} value={value ?? ""} onChange={(e) => onChange?.(e.target.value)} className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark placeholder:text-brand-dark/40 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all" />
+      <input type={type} placeholder={placeholder} maxLength={maxLength} value={value ?? ""} onChange={(e) => onChange?.(e.target.value)} className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark placeholder:text-brand-dark/40 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all" />
     </div>
   );
 }

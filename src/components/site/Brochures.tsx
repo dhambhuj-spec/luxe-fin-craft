@@ -12,6 +12,16 @@ async function signedUrl(path: string | null): Promise<string> {
   return data?.signedUrl ?? "";
 }
 
+async function signedDownloadUrl(path: string | null, filename: string): Promise<string> {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  const safe = filename.replace(/[^a-z0-9._-]+/gi, "_") + ".pdf";
+  const { data } = await supabase.storage
+    .from("brochures")
+    .createSignedUrl(path, 60 * 60, { download: safe });
+  return data?.signedUrl ?? "";
+}
+
 const hues = [
   "from-amber-100 to-orange-200",
   "from-sky-100 to-indigo-200",
@@ -25,7 +35,7 @@ const filters = ["All", "Residential", "Commercial", "Luxury"];
 export default function Brochures() {
   const [f, setF] = useState("All");
   const [q, setQ] = useState("");
-  const [inquiry, setInquiry] = useState<null | { id: string; name: string; builder: string; pdf_url: string | null; mode: "view" | "download" }>(null);
+  const [inquiry, setInquiry] = useState<null | { id: string; name: string; builder: string; pdf_path: string | null }>(null);
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["public-brochures"],
@@ -41,7 +51,6 @@ export default function Brochures() {
         rows.map(async (b) => ({
           ...b,
           image_signed: await signedUrl(b.image_url),
-          pdf_signed: await signedUrl(b.pdf_url),
         }))
       );
       return withUrls;
@@ -121,20 +130,13 @@ export default function Brochures() {
                     <div className="font-semibold text-brand-dark">{b.price || "On request"}</div>
                   </div>
                 </div>
-                <div className="mt-5 flex gap-2">
+                <div className="mt-5">
                   <button
                     type="button"
-                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: b.pdf_signed, mode: "view" })}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-dark text-white text-xs font-semibold py-2.5 hover:bg-brand-dark/90"
+                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_path: b.pdf_url })}
+                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-dark text-white text-xs font-semibold py-2.5 hover:bg-brand-dark/90"
                   >
-                    <Eye size={13} /> View Brochure
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: b.pdf_signed, mode: "download" })}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gold/15 text-brand-dark text-xs font-semibold px-3 py-2.5 hover:bg-brand-gold/30"
-                  >
-                    <Download size={13} /> PDF
+                    <Download size={13} /> Download Brochure
                   </button>
                 </div>
               </div>
@@ -163,7 +165,7 @@ function InquiryModal({
   data,
   onClose,
 }: {
-  data: { id: string; name: string; builder: string; pdf_url: string | null; mode: "view" | "download" };
+  data: { id: string; name: string; builder: string; pdf_path: string | null };
   onClose: () => void;
 }) {
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "" });
@@ -182,19 +184,27 @@ function InquiryModal({
       email: form.email.trim().slice(0, 254),
       product: `Brochure — ${data.name}`,
       source: "brochure",
-      message: `Requested brochure "${data.name}" by ${data.builder}. Action: ${data.mode === "download" ? "Download PDF" : "View brochure"}.\nAddress: ${form.address.trim()}`.slice(0, 2000),
+      message: `Requested brochure "${data.name}" by ${data.builder}. Action: Download PDF.\nAddress: ${form.address.trim()}`.slice(0, 2000),
     });
-    setSubmitting(false);
     if (error) {
+      setSubmitting(false);
       toast.error("Could not submit. Please try again.");
       return;
     }
-    toast.success("Thanks! Opening the brochure…");
-    if (data.pdf_url) {
-      window.open(data.pdf_url, "_blank", "noopener,noreferrer");
-    } else {
+    const url = await signedDownloadUrl(data.pdf_path, data.name || "brochure");
+    setSubmitting(false);
+    if (!url) {
       toast.info("Our advisor will send the brochure shortly.");
+      onClose();
+      return;
     }
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(data.name || "brochure").replace(/[^a-z0-9._-]+/gi, "_")}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast.success("Thanks! Your brochure is downloading.");
     onClose();
   };
 
@@ -228,7 +238,7 @@ function InquiryModal({
             <textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1 w-full rounded-xl border border-brand-dark/10 px-4 py-2.5 text-sm outline-none focus:border-brand-gold resize-none" placeholder="City, area, pincode" />
           </div>
           <button type="submit" disabled={submitting} className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-brand-dark text-white font-semibold py-3 text-sm hover:bg-brand-dark/90 disabled:opacity-60">
-            {submitting ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : <>{data.mode === "download" ? <><Download size={14} /> Get PDF</> : <><Eye size={14} /> View Brochure</>}</>}
+            {submitting ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : <><Download size={14} /> Download PDF</>}
           </button>
           <p className="text-[10px] text-brand-dark/40 text-center">By submitting, you agree to be contacted by Janaki Raghav Finserve.</p>
         </form>

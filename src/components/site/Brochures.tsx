@@ -5,6 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+async function signedUrl(path: string | null): Promise<string> {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  const { data } = await supabase.storage.from("brochures").createSignedUrl(path, 60 * 60);
+  return data?.signedUrl ?? "";
+}
+
 const hues = [
   "from-amber-100 to-orange-200",
   "from-sky-100 to-indigo-200",

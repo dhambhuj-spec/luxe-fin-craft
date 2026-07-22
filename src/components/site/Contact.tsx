@@ -16,14 +16,9 @@ export default function Contact() {
       toast.error("Please fill in your name, phone, and email.");
       return;
     }
-    const digits = form.phone.replace(/\D/g, "");
-    if (digits.length !== 10) {
-      toast.error("Please enter a valid 10-digit phone number.");
-      return;
-    }
     setBusy(true);
     const { error } = await supabase.from("leads").insert({
-      name: form.name, email: form.email, phone: digits,
+      name: form.name, email: form.email, phone: form.phone,
       product: form.product, amount: form.amount || null,
       message: form.message || null, source: "Website", stage: "New",
     });
@@ -49,7 +44,7 @@ export default function Contact() {
           <form onSubmit={submit} className="lg:col-span-3 glass rounded-3xl p-7 md:p-10 shadow-soft border border-brand-dark/5 space-y-5">
             <div className="grid sm:grid-cols-2 gap-5">
               <Field label="Full name" placeholder="Aarav Mehta" value={form.name} onChange={(v) => set("name", v)} />
-              <Field label="Phone number" placeholder="10-digit mobile" type="tel" maxLength={10} value={form.phone} onChange={(v) => set("phone", v.replace(/\D/g, "").slice(0, 10))} />
+              <Field label="Phone number" placeholder="Contact number" type="tel" value={form.phone} onChange={(v) => set("phone", v)} />
             </div>
             <div className="grid sm:grid-cols-2 gap-5">
               <Field label="Email" placeholder="you@email.com" type="email" value={form.email} onChange={(v) => set("email", v)} />

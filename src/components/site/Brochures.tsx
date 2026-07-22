@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Search, Download, Eye, MapPin, Building2, Filter, X, Loader2 } from "lucide-react";
+import { Search, Download, MapPin, Building2, Filter, X, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

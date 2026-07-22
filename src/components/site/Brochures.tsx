@@ -29,7 +29,15 @@ export default function Brochures() {
         .eq("status", "Published")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const withUrls = await Promise.all(
+        rows.map(async (b) => ({
+          ...b,
+          image_signed: await signedUrl(b.image_url),
+          pdf_signed: await signedUrl(b.pdf_url),
+        }))
+      );
+      return withUrls;
     },
   });
 
@@ -37,13 +45,6 @@ export default function Brochures() {
     (f === "All" || d.project_type === f) &&
     d.name.toLowerCase().includes(q.toLowerCase())
   );
-
-  const storageUrl = (path: string | null) => {
-    if (!path) return "";
-    if (path.startsWith("http")) return path;
-    const { data } = supabase.storage.from("brochures").getPublicUrl(path);
-    return data.publicUrl;
-  };
 
   return (
     <section id="brochures" className="py-24 md:py-32">
@@ -85,7 +86,7 @@ export default function Brochures() {
             >
               <div className={`relative h-48 bg-gradient-to-br ${hues[i % hues.length]} overflow-hidden`}>
                 {b.image_url ? (
-                  <img src={storageUrl(b.image_url)} alt={b.name} className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={b.image_signed || ""} alt={b.name} className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
                   <>
                     <div className="absolute inset-0 grid-bg opacity-30" />
@@ -116,14 +117,14 @@ export default function Brochures() {
                 <div className="mt-5 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: storageUrl(b.pdf_url), mode: "view" })}
+                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: b.pdf_signed, mode: "view" })}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-dark text-white text-xs font-semibold py-2.5 hover:bg-brand-dark/90"
                   >
                     <Eye size={13} /> View Brochure
                   </button>
                   <button
                     type="button"
-                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: storageUrl(b.pdf_url), mode: "download" })}
+                    onClick={() => setInquiry({ id: b.id, name: b.name, builder: b.builder, pdf_url: b.pdf_signed, mode: "download" })}
                     className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-gold/15 text-brand-dark text-xs font-semibold px-3 py-2.5 hover:bg-brand-gold/30"
                   >
                     <Download size={13} /> PDF

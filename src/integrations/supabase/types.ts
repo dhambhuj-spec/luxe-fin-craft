@@ -112,6 +112,7 @@ export type Database = {
           loan_amount: number | null
           message: string | null
           name: string
+          pan: string | null
           phone: string
           product: string | null
           query_note: string | null
@@ -130,6 +131,7 @@ export type Database = {
           loan_amount?: number | null
           message?: string | null
           name: string
+          pan?: string | null
           phone: string
           product?: string | null
           query_note?: string | null
@@ -148,6 +150,7 @@ export type Database = {
           loan_amount?: number | null
           message?: string | null
           name?: string
+          pan?: string | null
           phone?: string
           product?: string | null
           query_note?: string | null

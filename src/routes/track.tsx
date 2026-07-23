@@ -3,10 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
-  Search, Phone, ArrowLeft, CheckCircle2, Circle, AlertCircle, Clock,
+  Search, CreditCard, ArrowLeft, CheckCircle2, AlertCircle, Clock,
   FileText, ShieldCheck, LogIn, MessageSquare, BadgeCheck, Banknote, Wallet, XCircle,
 } from "lucide-react";
-import { trackByPhone, type TrackedLead } from "@/lib/track.functions";
+import { trackByPan, type TrackedLead } from "@/lib/track.functions";
 import logo from "@/assets/janaki-raghav-logo.png.asset.json";
 
 export const Route = createFileRoute("/track")({
@@ -33,8 +33,8 @@ const fmtINR = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n);
 
 function TrackPage() {
-  const track = useServerFn(trackByPhone);
-  const [phone, setPhone] = useState("");
+  const track = useServerFn(trackByPan);
+  const [pan, setPan] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<TrackedLead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,12 +42,12 @@ function TrackPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
-    const p = sp.get("phone");
+    const p = sp.get("pan");
     if (p) {
-      setPhone(p);
+      setPan(p.toUpperCase());
       (async () => {
         setLoading(true); setError(null);
-        try { const r = await track({ data: { phone: p } }); setResults(r); }
+        try { const r = await track({ data: { pan: p.toUpperCase() } }); setResults(r); }
         catch (err) { setError(err instanceof Error ? err.message : "Something went wrong"); }
         finally { setLoading(false); }
       })();
@@ -59,7 +59,7 @@ function TrackPage() {
     e.preventDefault();
     setLoading(true); setError(null); setResults(null);
     try {
-      const r = await track({ data: { phone } });
+      const r = await track({ data: { pan } });
       setResults(r);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -89,21 +89,23 @@ function TrackPage() {
           <h1 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-brand-dark">
             Track your <span className="text-gradient-gold">application.</span>
           </h1>
-          <p className="mt-3 text-brand-dark/60">Enter the phone number you registered with us to see your live loan status.</p>
+          <p className="mt-3 text-brand-dark/60">Enter your PAN card number to see your live loan status.</p>
         </div>
 
         <form onSubmit={onSubmit} className="glass rounded-3xl p-5 md:p-7 shadow-soft border border-brand-dark/5 max-w-2xl mx-auto">
-          <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">Registered phone number</label>
+          <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">PAN card number</label>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 flex items-center gap-2 rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 focus-within:border-brand-gold focus-within:ring-2 focus-within:ring-brand-gold/20">
-              <Phone size={16} className="text-brand-dark/40"/>
+              <CreditCard size={16} className="text-brand-dark/40"/>
               <input
-                type="tel"
-                inputMode="numeric"
-                placeholder="98XXX XXXXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm text-brand-dark placeholder:text-brand-dark/30"
+                type="text"
+                inputMode="text"
+                autoCapitalize="characters"
+                maxLength={10}
+                placeholder="ABCDE1234F"
+                value={pan}
+                onChange={(e) => setPan(e.target.value.toUpperCase())}
+                className="flex-1 bg-transparent outline-none text-sm text-brand-dark placeholder:text-brand-dark/30 tracking-widest uppercase"
               />
             </div>
             <button type="submit" disabled={loading}
@@ -116,7 +118,7 @@ function TrackPage() {
 
         {results && results.length === 0 && (
           <div className="mt-10 text-center text-brand-dark/60 text-sm">
-            No application found for this number. Please check the number or call us at +91 98765 43210.
+            No application found for this PAN. Please check the number or call us at +91 93285 12413.
           </div>
         )}
 

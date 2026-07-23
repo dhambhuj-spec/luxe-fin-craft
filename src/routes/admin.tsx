@@ -719,6 +719,7 @@ type Lead = {
   name: string;
   email: string;
   phone: string;
+  pan: string | null;
   product: string | null;
   amount: string | null;
   source: string;
@@ -768,7 +769,7 @@ function LeadsView() {
     const q = search.trim().toLowerCase();
     return leads.filter(l =>
       (filter === "All" || l.stage === filter) &&
-      (!q || l.name.toLowerCase().includes(q) || l.phone.includes(q) || (l.email || "").toLowerCase().includes(q))
+      (!q || l.name.toLowerCase().includes(q) || l.phone.includes(q) || (l.email || "").toLowerCase().includes(q) || (l.pan || "").toLowerCase().includes(q))
     );
   }, [leads, filter, search]);
 
@@ -787,9 +788,9 @@ function LeadsView() {
     else toast.success("Lead deleted");
   };
 
-  const copyTrackLink = (phone: string) => {
-    const digits = phone.replace(/\D/g, "").slice(-10);
-    const url = `${window.location.origin}/track?phone=${digits}`;
+  const copyTrackLink = (pan: string | null) => {
+    if (!pan) { toast.error("Add a PAN number to this lead first"); return; }
+    const url = `${window.location.origin}/track?pan=${pan.toUpperCase()}`;
     navigator.clipboard.writeText(url).then(() => toast.success("Tracking link copied"));
   };
 
@@ -886,7 +887,7 @@ function LeadsView() {
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
                       <button title="Edit / Process" onClick={() => setEditing(l)} className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-600"><Edit3 size={14}/></button>
-                      <button title="Copy tracking link" onClick={() => copyTrackLink(l.phone)} className="h-8 w-8 rounded-lg hover:bg-amber-50 grid place-items-center text-amber-600"><Copy size={14}/></button>
+                      <button title="Copy tracking link" onClick={() => copyTrackLink(l.pan)} className="h-8 w-8 rounded-lg hover:bg-amber-50 grid place-items-center text-amber-600"><Copy size={14}/></button>
                       <a title="Call" href={`tel:${l.phone}`} className="h-8 w-8 rounded-lg hover:bg-emerald-50 grid place-items-center text-emerald-600"><Phone size={14}/></a>
                       <a title="WhatsApp" target="_blank" rel="noreferrer" href={`https://wa.me/${l.phone.replace(/\D/g,"")}`} className="h-8 w-8 rounded-lg hover:bg-emerald-50 grid place-items-center text-emerald-600"><MessageCircle size={14}/></a>
                       <a title="Email" href={`mailto:${l.email}`} className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Mail size={14}/></a>
@@ -914,7 +915,7 @@ const SOURCES = ["Website", "WhatsApp", "Walk-in", "Referral", "Instagram", "Fac
 
 function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({
-    name: "", phone: "", email: "", product: "Home Loan", source: "Walk-in",
+    name: "", phone: "", email: "", pan: "", product: "Home Loan", source: "Walk-in",
     loan_amount: 5000000, interest_rate: 8.4, tenure_years: 20,
     stage: "New" as string, message: "",
   });
@@ -923,9 +924,14 @@ function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 
   const save = async () => {
     if (!form.name || !form.phone) { toast.error("Name and phone are required"); return; }
+    const pan = form.pan.trim().toUpperCase();
+    if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+      toast.error("PAN must be 10 chars (e.g. ABCDE1234F)"); return;
+    }
     setBusy(true);
     const { error } = await supabase.from("leads").insert({
       name: form.name, phone: form.phone, email: form.email || `${form.phone.replace(/\D/g,"")}@noemail.local`,
+      pan: pan || null,
       product: form.product, source: form.source, stage: form.stage,
       loan_amount: form.loan_amount, interest_rate: form.interest_rate, tenure_years: form.tenure_years,
       amount: `₹${new Intl.NumberFormat("en-IN").format(form.loan_amount)}`,
@@ -951,6 +957,7 @@ function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
             <AField label="Full name *" value={form.name} onChange={(v) => set("name", v)} placeholder="Customer name"/>
             <AField label="Phone *" value={form.phone} onChange={(v) => set("phone", v)} placeholder="+91 98XXX XXXXX"/>
             <AField label="Email" value={form.email} onChange={(v) => set("email", v)} placeholder="optional"/>
+            <AField label="PAN card number" value={form.pan} onChange={(v) => set("pan", v.toUpperCase())} placeholder="ABCDE1234F"/>
             <ASelect label="Loan product" opts={PRODUCTS} value={form.product} onChange={(v) => set("product", v)}/>
             <ASelect label="Source" opts={SOURCES} value={form.source} onChange={(v) => set("source", v)}/>
             <ASelect label="Initial stage" opts={ALL_STAGES} value={form.stage} onChange={(v) => set("stage", v)}/>
@@ -980,6 +987,7 @@ function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({
     stage: lead.stage,
+    pan: lead.pan ?? "",
     query_note: lead.query_note ?? "",
     rejection_reason: lead.rejection_reason ?? "",
     loan_amount: lead.loan_amount ?? 5000000,
@@ -992,9 +1000,14 @@ function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () =>
   const set = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm(f => ({ ...f, [k]: v }));
 
   const save = async () => {
+    const pan = form.pan.trim().toUpperCase();
+    if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+      toast.error("PAN must be 10 chars (e.g. ABCDE1234F)"); return;
+    }
     setBusy(true);
     const { error } = await supabase.from("leads").update({
       stage: form.stage,
+      pan: pan || null,
       query_note: form.query_note || null,
       rejection_reason: form.stage === "Rejected" ? (form.rejection_reason || null) : null,
       loan_amount: form.loan_amount,
@@ -1009,8 +1022,9 @@ function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () =>
     toast.success("Lead updated"); onSaved();
   };
 
-  const trackUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/track?phone=${lead.phone.replace(/\D/g,"").slice(-10)}`
+  const panForLink = (form.pan || lead.pan || "").trim().toUpperCase();
+  const trackUrl = typeof window !== "undefined" && panForLink
+    ? `${window.location.origin}/track?pan=${panForLink}`
     : "";
 
   return (
@@ -1028,13 +1042,14 @@ function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () =>
           <div className="rounded-2xl bg-brand-gold/10 border border-brand-gold/30 p-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wider font-bold text-brand-dark/60">Customer tracking link</div>
-              <div className="text-xs text-brand-dark truncate">{trackUrl}</div>
+              <div className="text-xs text-brand-dark truncate">{trackUrl || "Add PAN to generate link"}</div>
             </div>
-            <button onClick={() => { navigator.clipboard.writeText(trackUrl); toast.success("Copied"); }}
-              className="text-xs font-bold rounded-lg bg-brand-dark text-white px-3 py-1.5 inline-flex items-center gap-1.5"><Copy size={12}/> Copy</button>
+            <button disabled={!trackUrl} onClick={() => { navigator.clipboard.writeText(trackUrl); toast.success("Copied"); }}
+              className="text-xs font-bold rounded-lg bg-brand-dark text-white px-3 py-1.5 inline-flex items-center gap-1.5 disabled:opacity-50"><Copy size={12}/> Copy</button>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
+            <AField label="PAN card number" value={form.pan} onChange={(v) => set("pan", v.toUpperCase())} placeholder="ABCDE1234F"/>
             <ASelect label="Loan product" opts={PRODUCTS} value={form.product} onChange={(v) => set("product", v)}/>
             <ASelect label="Source" opts={SOURCES} value={form.source} onChange={(v) => set("source", v)}/>
           </div>

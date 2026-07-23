@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export default function Contact() {
   const [form, setForm] = useState({
-    name: "", phone: "", email: "", product: "Home Loan", amount: "", message: "",
+    name: "", phone: "", email: "", pan: "", product: "Home Loan", amount: "", message: "",
   });
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof form, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -16,16 +16,22 @@ export default function Contact() {
       toast.error("Please fill in your name, phone, and email.");
       return;
     }
+    const pan = form.pan.trim().toUpperCase();
+    if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+      toast.error("Please enter a valid 10-character PAN (e.g. ABCDE1234F).");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.from("leads").insert({
       name: form.name, email: form.email, phone: form.phone,
+      pan: pan || null,
       product: form.product, amount: form.amount || null,
       message: form.message || null, source: "Website", stage: "New",
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Enquiry submitted. Our advisor will contact you shortly.");
-    setForm({ name: "", phone: "", email: "", product: "Home Loan", amount: "", message: "" });
+    setForm({ name: "", phone: "", email: "", pan: "", product: "Home Loan", amount: "", message: "" });
   };
 
   return (
@@ -51,7 +57,10 @@ export default function Contact() {
               <SelectField label="Service" value={form.product} onChange={(v) => set("product", v)}
                 options={["Home Loan","Loan Against Property","Car Loan","Business Loan","Personal Loan","Health Insurance","Motor Insurance","Term Life Insurance"]} />
             </div>
-            <Field label="Loan amount required" placeholder="₹ 25,00,000" value={form.amount} onChange={(v) => set("amount", v)} />
+            <div className="grid sm:grid-cols-2 gap-5">
+              <Field label="PAN card number" placeholder="ABCDE1234F" value={form.pan} onChange={(v) => set("pan", v.toUpperCase())} maxLength={10} />
+              <Field label="Loan amount required" placeholder="₹ 25,00,000" value={form.amount} onChange={(v) => set("amount", v)} />
+            </div>
             <div>
               <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">Message</label>
               <textarea rows={4} value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Tell us about your requirement…" className="w-full rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark placeholder:text-brand-dark/40 focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all" />

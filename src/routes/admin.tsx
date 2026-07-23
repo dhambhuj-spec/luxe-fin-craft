@@ -719,6 +719,7 @@ type Lead = {
   name: string;
   email: string;
   phone: string;
+  pan: string | null;
   product: string | null;
   amount: string | null;
   source: string;
@@ -768,7 +769,7 @@ function LeadsView() {
     const q = search.trim().toLowerCase();
     return leads.filter(l =>
       (filter === "All" || l.stage === filter) &&
-      (!q || l.name.toLowerCase().includes(q) || l.phone.includes(q) || (l.email || "").toLowerCase().includes(q))
+      (!q || l.name.toLowerCase().includes(q) || l.phone.includes(q) || (l.email || "").toLowerCase().includes(q) || (l.pan || "").toLowerCase().includes(q))
     );
   }, [leads, filter, search]);
 
@@ -787,9 +788,9 @@ function LeadsView() {
     else toast.success("Lead deleted");
   };
 
-  const copyTrackLink = (phone: string) => {
-    const digits = phone.replace(/\D/g, "").slice(-10);
-    const url = `${window.location.origin}/track?phone=${digits}`;
+  const copyTrackLink = (pan: string | null) => {
+    if (!pan) { toast.error("Add a PAN number to this lead first"); return; }
+    const url = `${window.location.origin}/track?pan=${pan.toUpperCase()}`;
     navigator.clipboard.writeText(url).then(() => toast.success("Tracking link copied"));
   };
 
@@ -886,7 +887,7 @@ function LeadsView() {
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
                       <button title="Edit / Process" onClick={() => setEditing(l)} className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-600"><Edit3 size={14}/></button>
-                      <button title="Copy tracking link" onClick={() => copyTrackLink(l.phone)} className="h-8 w-8 rounded-lg hover:bg-amber-50 grid place-items-center text-amber-600"><Copy size={14}/></button>
+                      <button title="Copy tracking link" onClick={() => copyTrackLink(l.pan)} className="h-8 w-8 rounded-lg hover:bg-amber-50 grid place-items-center text-amber-600"><Copy size={14}/></button>
                       <a title="Call" href={`tel:${l.phone}`} className="h-8 w-8 rounded-lg hover:bg-emerald-50 grid place-items-center text-emerald-600"><Phone size={14}/></a>
                       <a title="WhatsApp" target="_blank" rel="noreferrer" href={`https://wa.me/${l.phone.replace(/\D/g,"")}`} className="h-8 w-8 rounded-lg hover:bg-emerald-50 grid place-items-center text-emerald-600"><MessageCircle size={14}/></a>
                       <a title="Email" href={`mailto:${l.email}`} className="h-8 w-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-500"><Mail size={14}/></a>

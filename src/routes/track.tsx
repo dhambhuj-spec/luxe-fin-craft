@@ -89,21 +89,23 @@ function TrackPage() {
           <h1 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-brand-dark">
             Track your <span className="text-gradient-gold">application.</span>
           </h1>
-          <p className="mt-3 text-brand-dark/60">Enter the phone number you registered with us to see your live loan status.</p>
+          <p className="mt-3 text-brand-dark/60">Enter your PAN card number to see your live loan status.</p>
         </div>
 
         <form onSubmit={onSubmit} className="glass rounded-3xl p-5 md:p-7 shadow-soft border border-brand-dark/5 max-w-2xl mx-auto">
-          <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">Registered phone number</label>
+          <label className="block text-xs font-semibold text-brand-dark/70 mb-2 uppercase tracking-wider">PAN card number</label>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 flex items-center gap-2 rounded-2xl bg-white border border-brand-dark/10 px-4 py-3 focus-within:border-brand-gold focus-within:ring-2 focus-within:ring-brand-gold/20">
-              <Phone size={16} className="text-brand-dark/40"/>
+              <CreditCard size={16} className="text-brand-dark/40"/>
               <input
-                type="tel"
-                inputMode="numeric"
-                placeholder="98XXX XXXXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm text-brand-dark placeholder:text-brand-dark/30"
+                type="text"
+                inputMode="text"
+                autoCapitalize="characters"
+                maxLength={10}
+                placeholder="ABCDE1234F"
+                value={pan}
+                onChange={(e) => setPan(e.target.value.toUpperCase())}
+                className="flex-1 bg-transparent outline-none text-sm text-brand-dark placeholder:text-brand-dark/30 tracking-widest uppercase"
               />
             </div>
             <button type="submit" disabled={loading}
@@ -116,7 +118,7 @@ function TrackPage() {
 
         {results && results.length === 0 && (
           <div className="mt-10 text-center text-brand-dark/60 text-sm">
-            No application found for this number. Please check the number or call us at +91 98765 43210.
+            No application found for this PAN. Please check the number or call us at +91 93285 12413.
           </div>
         )}
 

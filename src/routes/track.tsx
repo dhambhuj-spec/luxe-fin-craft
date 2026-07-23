@@ -33,8 +33,8 @@ const fmtINR = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n);
 
 function TrackPage() {
-  const track = useServerFn(trackByPhone);
-  const [phone, setPhone] = useState("");
+  const track = useServerFn(trackByPan);
+  const [pan, setPan] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<TrackedLead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,12 +42,12 @@ function TrackPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
-    const p = sp.get("phone");
+    const p = sp.get("pan");
     if (p) {
-      setPhone(p);
+      setPan(p.toUpperCase());
       (async () => {
         setLoading(true); setError(null);
-        try { const r = await track({ data: { phone: p } }); setResults(r); }
+        try { const r = await track({ data: { pan: p.toUpperCase() } }); setResults(r); }
         catch (err) { setError(err instanceof Error ? err.message : "Something went wrong"); }
         finally { setLoading(false); }
       })();
@@ -59,7 +59,7 @@ function TrackPage() {
     e.preventDefault();
     setLoading(true); setError(null); setResults(null);
     try {
-      const r = await track({ data: { phone } });
+      const r = await track({ data: { pan } });
       setResults(r);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

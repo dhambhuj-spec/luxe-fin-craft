@@ -987,6 +987,7 @@ function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({
     stage: lead.stage,
+    pan: lead.pan ?? "",
     query_note: lead.query_note ?? "",
     rejection_reason: lead.rejection_reason ?? "",
     loan_amount: lead.loan_amount ?? 5000000,
@@ -999,9 +1000,14 @@ function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () =>
   const set = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm(f => ({ ...f, [k]: v }));
 
   const save = async () => {
+    const pan = form.pan.trim().toUpperCase();
+    if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+      toast.error("PAN must be 10 chars (e.g. ABCDE1234F)"); return;
+    }
     setBusy(true);
     const { error } = await supabase.from("leads").update({
       stage: form.stage,
+      pan: pan || null,
       query_note: form.query_note || null,
       rejection_reason: form.stage === "Rejected" ? (form.rejection_reason || null) : null,
       loan_amount: form.loan_amount,
@@ -1016,8 +1022,9 @@ function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () =>
     toast.success("Lead updated"); onSaved();
   };
 
-  const trackUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/track?phone=${lead.phone.replace(/\D/g,"").slice(-10)}`
+  const panForLink = (form.pan || lead.pan || "").trim().toUpperCase();
+  const trackUrl = typeof window !== "undefined" && panForLink
+    ? `${window.location.origin}/track?pan=${panForLink}`
     : "";
 
   return (
@@ -1035,13 +1042,14 @@ function EditLeadDrawer({ lead, onClose, onSaved }: { lead: Lead; onClose: () =>
           <div className="rounded-2xl bg-brand-gold/10 border border-brand-gold/30 p-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[10px] uppercase tracking-wider font-bold text-brand-dark/60">Customer tracking link</div>
-              <div className="text-xs text-brand-dark truncate">{trackUrl}</div>
+              <div className="text-xs text-brand-dark truncate">{trackUrl || "Add PAN to generate link"}</div>
             </div>
-            <button onClick={() => { navigator.clipboard.writeText(trackUrl); toast.success("Copied"); }}
-              className="text-xs font-bold rounded-lg bg-brand-dark text-white px-3 py-1.5 inline-flex items-center gap-1.5"><Copy size={12}/> Copy</button>
+            <button disabled={!trackUrl} onClick={() => { navigator.clipboard.writeText(trackUrl); toast.success("Copied"); }}
+              className="text-xs font-bold rounded-lg bg-brand-dark text-white px-3 py-1.5 inline-flex items-center gap-1.5 disabled:opacity-50"><Copy size={12}/> Copy</button>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
+            <AField label="PAN card number" value={form.pan} onChange={(v) => set("pan", v.toUpperCase())} placeholder="ABCDE1234F"/>
             <ASelect label="Loan product" opts={PRODUCTS} value={form.product} onChange={(v) => set("product", v)}/>
             <ASelect label="Source" opts={SOURCES} value={form.source} onChange={(v) => set("source", v)}/>
           </div>

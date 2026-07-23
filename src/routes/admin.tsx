@@ -915,7 +915,7 @@ const SOURCES = ["Website", "WhatsApp", "Walk-in", "Referral", "Instagram", "Fac
 
 function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({
-    name: "", phone: "", email: "", product: "Home Loan", source: "Walk-in",
+    name: "", phone: "", email: "", pan: "", product: "Home Loan", source: "Walk-in",
     loan_amount: 5000000, interest_rate: 8.4, tenure_years: 20,
     stage: "New" as string, message: "",
   });
@@ -924,9 +924,14 @@ function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 
   const save = async () => {
     if (!form.name || !form.phone) { toast.error("Name and phone are required"); return; }
+    const pan = form.pan.trim().toUpperCase();
+    if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+      toast.error("PAN must be 10 chars (e.g. ABCDE1234F)"); return;
+    }
     setBusy(true);
     const { error } = await supabase.from("leads").insert({
       name: form.name, phone: form.phone, email: form.email || `${form.phone.replace(/\D/g,"")}@noemail.local`,
+      pan: pan || null,
       product: form.product, source: form.source, stage: form.stage,
       loan_amount: form.loan_amount, interest_rate: form.interest_rate, tenure_years: form.tenure_years,
       amount: `₹${new Intl.NumberFormat("en-IN").format(form.loan_amount)}`,
@@ -952,6 +957,7 @@ function AddLeadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
             <AField label="Full name *" value={form.name} onChange={(v) => set("name", v)} placeholder="Customer name"/>
             <AField label="Phone *" value={form.phone} onChange={(v) => set("phone", v)} placeholder="+91 98XXX XXXXX"/>
             <AField label="Email" value={form.email} onChange={(v) => set("email", v)} placeholder="optional"/>
+            <AField label="PAN card number" value={form.pan} onChange={(v) => set("pan", v.toUpperCase())} placeholder="ABCDE1234F"/>
             <ASelect label="Loan product" opts={PRODUCTS} value={form.product} onChange={(v) => set("product", v)}/>
             <ASelect label="Source" opts={SOURCES} value={form.source} onChange={(v) => set("source", v)}/>
             <ASelect label="Initial stage" opts={ALL_STAGES} value={form.stage} onChange={(v) => set("stage", v)}/>
